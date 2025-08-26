@@ -4,11 +4,11 @@ import PeriodSelector from '@/components/PeriodSelector';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function PcrPage() {
+export default function IrsmPage() {
 
   return (
     <div>
-      <PeriodSelector title='Performance Commitment & Review' description='Input or Edit Performance Commitment and Review Form' />
+      <PeriodSelector title='Individual Rating Scale Matrix' description='View Individual Rating Scale Matrix' />
     </div >
   );
 }
