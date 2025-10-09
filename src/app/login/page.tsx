@@ -3,13 +3,10 @@
 import Form from 'next/form'
 import { login } from '@/lib/auth/login';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-
 
 export default function Home() {
 
   const router = useRouter();
-  const [error, setError] = useState('');
 
   async function handleSubmit(formData: FormData) {
     // event.preventDefault();
@@ -19,8 +16,9 @@ export default function Home() {
       await login(formData);
       // ✅ Redirect after successful login
       router.push('/dashboard');
-    } catch (err: any) {
-      setError('Login failed. Please try again.');
+    } catch (err) {
+      console.log(err);
+
     }
   }
 

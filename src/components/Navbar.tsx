@@ -2,24 +2,24 @@
 
 import { getUser } from "@/lib/auth/getUser";
 import { logout } from "@/lib/auth/logout";
-import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useEffect, useState } from "react";
 import Link from 'next/link'
 import Image from "next/image";
 
-export default function Navbar({ navLinks, rightMenu
-}: { navLinks?: React.ReactNode; rightMenu?: React.ReactNode; }) {
+// { navLinks, rightMenu }: { navLinks?: React.ReactNode; rightMenu?: React.ReactNode; }
+export default function Navbar() {
   const router = useRouter();
   const pathName = usePathname();
 
   async function handleLogout() {
-    const res = await logout();
+    await logout();
     router.push("/login");
   }
 
-  const [user, setUser] = useState<{ acc_id: Number, username: String }>() || null;
-  const [isAuthenticated, setIsAuthenticated] = useState<Boolean>(false);
+  const [user, setUser] = useState<{ acc_id: number, username: string }>() || null;
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   useEffect(() => {
     async function getAuthenticatedUser() {
       if (pathName == '/login' || pathName == '/') {
@@ -31,12 +31,13 @@ export default function Navbar({ navLinks, rightMenu
         setUser(userData);
         setIsAuthenticated(true)
       } catch (error) {
+        console.log(error);
         setIsAuthenticated(false)
       }
 
     }
     getAuthenticatedUser()
-  }, [router, pathName])
+  }, [router, pathName, setUser])
 
   if (!isAuthenticated) {
     return <div></div>

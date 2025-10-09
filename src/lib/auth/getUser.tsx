@@ -6,7 +6,7 @@ export async function getUser() {
     try {
         const response = await API.get('/api/user');
         return response.data;
-    } catch (error: any) {
+    } catch (error) {
         console.error('get User Error:', error);
         throw error;
     }

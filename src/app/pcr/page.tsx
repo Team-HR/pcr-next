@@ -1,8 +1,6 @@
 'use client';
 
 import PeriodSelector from '@/components/PeriodSelector';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 export default function PcrPage() {
 

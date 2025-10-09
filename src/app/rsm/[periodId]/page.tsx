@@ -1,67 +1,144 @@
 "use client";
 
 import API from "@/lib/axios";
-import { use, useEffect, useState } from "react";
-import RsmRowComponent from "./RsmRowComponent";
+import { use, useEffect, useRef, useState } from "react";
+import RsmRowComponent from "./components/RsmRowComponent";
+import MultipleSearchSelect from "@/components/MultipleSearchSelect";
+import SavingModal from "@/components/SavingModal";
+import MfoDropdownComponent from "./components/MfoDropdownComponent";
+import { useRsmContext } from "../context/RsmContext";
+import MfoEditComponent from "./components/MfoEditComponent";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
 };
 
-type Personnel = {
-    employee_id: number,
-    full_name: string,
-    actual_accomplishment: string
+type Header = {
+    department: { department: string }
+    period: string
+    year: number
 }
-
-type SuccessIndicator = {
-    personnel?: Personnel[]
-}
-
-
-type Row = {
-    cf_ID: number,
-    cf_count: string,
-    cf_title: string,
-    has_si: boolean,
-    indent: number,
-    num_si: number,
-    success_indicator: SuccessIndicator
-}
-
 
 export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     const { periodId } = use(params);
-    const [data, setData] = useState<any>(null);
-    const [rows, setRows] = useState<Row[]>([]);
+    const [data, setData] = useState<Header>();
+    // const [rows, setRows] = useState<Row[] | undefined>(undefined) // useRsmContext();
+    const { rows, setRows } = useRsmContext();
+
+    const [employeesOption, setEmployeeOption] = useState<EmployeeOption[]>([])
+    const [siToEditSelected, setSiToEditSelected] = useState<EmployeeOption[]>([])
+
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-    async function getRatingScaleMatrixInfo() {
-        try {
-            const response = await API.get("/api/rsm/title/" + periodId);
-            setData(response.data);
-        } catch (error) {
-            console.log(error);
-        } finally {
-            // setLoading(false);
-        }
-    }
+    const [siToEdit, setSiToEdit] = useState<SuccessIndicator | null>(null)
 
-    async function getRsmRows() {
-        try {
-            const response = await API.get("/api/rsm/" + periodId);
-            setRows(response.data.rows);
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    // const efficiencyRefs = Array.from({ length: 5 }, () =>
+    //     useRef<HTMLInputElement>(null)
+    // );
+    // const qualityRefs = Array.from({ length: 5 }, () =>
+    //     useRef<HTMLInputElement>(null)
+    // );
+    // const timelinessRefs = Array.from({ length: 5 }, () =>
+    //     useRef<HTMLInputElement>(null)
+    // );
+
+
+    // const efficiencyRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
+    const efficiencyRefs = [
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+    ];
+    // const qualityRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
+    const qualityRefs = [
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+    ];
+
+    // const timelinessRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
+    const timelinessRefs = [
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+    ];
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        getRatingScaleMatrixInfo();
-        getRsmRows();
-    }, [periodId]);
+        async function getRatingScaleMatrixInfo() {
+            try {
+                const response = await API.get("/api/rsm/title/" + periodId);
+                setData(response.data);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function getRsmRows() {
+            setLoading(true)
+            try {
+                const response = await API.get("/api/rsm/" + periodId);
+                setRows(response.data.rows);
+                console.log('rows:', response.data.rows);
+
+            } catch (error) {
+                console.log(error);
+            } finally {
+                // setLoading(false);
+            }
+        }
+
+        async function getEmployeesOption() {
+            try {
+                const response = await API.get("/api/getAllEmployees");
+                setEmployeeOption(response.data)
+                console.log("getEmployeesOption:", response.data);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        getRatingScaleMatrixInfo()
+        getRsmRows()
+        getEmployeesOption()
+    }, [periodId, setRows]);
+
+
+    useEffect(() => {
+        if (siToEdit && textareaRef.current) {
+            textareaRef.current.value = siToEdit?.mi_succIn || "";
+        }
+
+        qualityRefs.forEach((ref, i) => {
+            if (siToEdit && ref?.current) {
+                ref.current.value = siToEdit.quality?.[i] ?? "";
+            }
+        })
+
+        efficiencyRefs.forEach((ref, i) => {
+            if (siToEdit && ref?.current) {
+                ref.current.value = siToEdit.efficiency?.[i] ?? "";
+            }
+        })
+
+        timelinessRefs.forEach((ref, i) => {
+            if (siToEdit && ref?.current) {
+                ref.current.value = siToEdit.timeliness?.[i] ?? "";
+            }
+        });
+
+    }, [siToEdit, efficiencyRefs, qualityRefs, timelinessRefs]);
+
 
     if (loading) {
         return (
@@ -71,144 +148,227 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         );
     }
 
+    const editSuccessIndicator = (data: SuccessIndicator) => {
+        setSiToEdit(data);
+        setSiToEditSelected(data.personnel ?? [])
+        console.log('siToEdit:', data);
+        (document.getElementById('my_modal_3') as HTMLDialogElement).showModal();
+    }
+
+    async function submitEdit() {
+        setSaving(true);
+        (document.getElementById('saving_modal') as HTMLDialogElement).showModal();
+        const mi_id = siToEdit?.mi_id;
+        const cf_ID = siToEdit?.cf_ID;
+        const successIndicator = textareaRef.current?.value;
+
+        const qualityArr = [];
+        for (let index = 0; index < qualityRefs.length; index++) {
+            qualityArr.push(qualityRefs[index].current?.value)
+        }
+
+        const efficiencyArr = [];
+        for (let index = 0; index < efficiencyRefs.length; index++) {
+            efficiencyArr.push(efficiencyRefs[index].current?.value)
+        }
+
+        const timelinessArr = [];
+        for (let index = 0; index < timelinessRefs.length; index++) {
+            timelinessArr.push(timelinessRefs[index].current?.value)
+        }
+
+        try {
+            await API.post("/api/si/save", {
+                mi_id: mi_id,
+                cf_ID: cf_ID,
+                successIndicator: successIndicator,
+                quality: qualityArr,
+                efficiency: efficiencyArr,
+                timeliness: timelinessArr,
+                inCharge: siToEditSelected
+            });
+
+            await reloadRows();
+
+            (document.getElementById('my_modal_3') as HTMLDialogElement).close();
+            setSaving(false);
+            (document.getElementById('saving_modal') as HTMLDialogElement).close();
+
+        } catch (error) {
+            alert(error)
+        }
+
+    }
+
+
+    async function reloadRows() {
+        const response = await API.get("/api/rsm/" + periodId);
+        setRows(response.data.rows);
+    }
+
     return (
         <div>
-            <div className="mt-10 text-3xl flex justify-center">
+            <SavingModal />
+            {/* multiselect component start */}
+            {/* <div className="mt- flex justify-center">
                 Rating Scale Matrix
-            </div>
-            <div className="text-2xl flex justify-center">{data.department?.department}</div>
-            <div className="text-xl flex justify-center">{data?.period} {data?.year}</div>
-
-            {/* Example of rendering fetched data */}
-            {/* {data && (
-                <div className="mt-6 flex justify-center">
-                    <pre>{JSON.stringify(data, null, 2)}</pre>
-                </div>
-            )} */}
-            <table className="table-auto">
-                <thead>
-                    <tr>
-                        <th className="p-4 border">MFO/PAP</th>
-                        <th className="p-4 border">SUCCESS INDICATOR</th>
-                        <th className="p-4 border">PERFORMANCE MEASURES</th>
-                        <th className="p-4 border">Q</th>
-                        <th className="p-4 border">E</th>
-                        <th className="p-4 border">T</th>
-                        <th className="p-4 border">IN-CHARGE</th>
-                        <th className="p-4 border">OPTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows && rows.length > 0 ? (
-                        rows.map((row: any, index: number) => {
-                            if (!row.has_si) {  // for mfos with no success indicator
-                                return (
-                                    <tr key={row.id ?? index}>
-                                        <td
-                                            className="px-4 border"
-                                            colSpan={8}
-                                            style={{ textIndent: row.indent ? row.indent * 10 : 0 }}
-                                        >
-                                            {row.cf_count} {row.cf_title}
-                                        </td>
-                                    </tr>
-                                );
-                            } else if (row.has_si && row.num_si === 1) { // for mfos with only one success indicator
-                                return (
-                                    <tr key={row.id ?? index}>
-                                        <RsmRowComponent row={row} index={0} />
-                                    </tr>
-                                );
-                            } else if (row.has_si && row.num_si > 1) { // for mfos with more than 1 success indicator
-                                return row.success_indicators.map((si: any, sIndex: number) => {
-                                    if (sIndex === 0) {
-                                        return (
-                                            <tr key={`${row.id ?? index}.${sIndex}`}>
-                                                <td
-                                                    rowSpan={row.num_si}
-                                                    className="px-4 border"
-                                                    style={{ textIndent: row.indent ? row.indent * 10 : 0 }}
-                                                >
-                                                    {row.cf_count} {row.cf_title}
-                                                </td>
-                                                <td className="px-4 border">{si.mi_succIn}</td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].perf_measures ? row.success_indicators[sIndex].perf_measures.map((measure: any, mIndex: number) => {
-                                                            return <div key={mIndex} className="p-0 m-0">{measure}</div>
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].has_quality ? row.success_indicators[sIndex].quality.map((item: string, i: number) => {
-                                                            if (i < 5 && item) {
-                                                                return <div key={i}><b>{5 - i}</b> - {item}</div>
-                                                            }
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].has_efficiency ? row.success_indicators[sIndex].efficiency.map((item: string, i: number) => {
-                                                            if (i < 5 && item) {
-                                                                return <div key={i}><b>{5 - i}</b> - {item}</div>
-                                                            }
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].has_timeliness ? row.success_indicators[sIndex].timeliness.map((item: string, i: number) => {
-                                                            if (i < 5 && item) {
-                                                                return <div key={i}><b>{5 - i}</b> - {item}</div>
-                                                            }
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].personnel ? row.success_indicators[sIndex].personnel.map((person: Personnel) => {
-                                                            return <div key={person.employee_id}>{person.full_name}</div>
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border"></td>
-                                            </tr>
-                                        );
-                                    } else {
-                                        return (
-                                            <tr key={`${row.id ?? index}.${sIndex}`}>
-                                                <td className="px-4 border">{si.mi_succIn}</td>
-                                                <td className="px-4 border">
-                                                    {
-                                                        row.success_indicators[sIndex].perf_measures ? row.success_indicators[sIndex].perf_measures.map((measure: string, mIndex: number) => {
-                                                            return <div key={mIndex} className="p-0 m-0">{measure}</div>
-                                                        }) : ''
-                                                    }
-                                                </td>
-                                                <td className="px-4 border"></td>
-                                                <td className="px-4 border"></td>
-                                                <td className="px-4 border"></td>
-                                                <td className="px-4 border"></td>
-                                                <td className="px-4 border"></td>
-                                            </tr>
-                                        );
-                                    }
-                                });
-                            }
-                            return null;
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={8} className="text-center py-4 border">
-                                No rows found
-                            </td>
+            </div> */}
+            <div className="text-xl flex justify-center">{data?.department?.department}</div>
+            <div className="text-lg flex justify-center">{data?.period} {data?.year}</div>
+            <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 h-screen">
+                <table className="table table-pin-rows table-pin-cols">
+                    <thead>
+                        <tr className="text-center">
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50">MFO/PAP</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50">SUCCESS INDICATOR</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50">PERFORMANCE <br />MEASURES</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50 text-center">QUALITY</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50 text-center">EFFICIENCY</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50 text-center">TIMELINESS</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50">IN-CHARGE</th>
+                            <th className="text-xs p-1 border-1 border-gray-300 bg-gray-50">OPTIONS</th>
                         </tr>
-                    )}
-                </tbody>
+                    </thead>
+                    <tbody>
+                        {rows && rows.length > 0 ? (
+                            rows.map((row: Row, index: number) => {
+                                if (!row.has_si) {  // for mfos with no success indicator
+                                    return (
+                                        <tr key={index} className="hover:bg-gray-100">
+                                            <td
+                                                className="px-4 border-1 border-gray-300"
+                                                colSpan={8}
+                                                style={{ textIndent: row.indent ? row.indent * 10 : 0 }}
+                                            >
+                                                <MfoDropdownComponent row={row} /> {row.cf_count} {row.cf_title}
+                                            </td>
+                                        </tr>
+                                    );
+                                } else if (row.has_si && row.num_si === 1) { // for mfos with only one success indicator
+                                    return (
+                                        <tr key={index} className="hover:bg-gray-100">
+                                            <RsmRowComponent row={row} index={0} onEditonSelect={editSuccessIndicator} />
+                                        </tr>
+                                    );
+                                } else if (row.has_si && row.num_si > 1) { // for mfos with more than 1 success indicator
+                                    return row.success_indicators.map((si: SuccessIndicator, sIndex: number) => {
+                                        if (sIndex === 0) {
+                                            return (
+                                                <tr key={`${index}.${sIndex}`} className="hover:bg-gray-100">
+                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} />
+                                                </tr>
+                                            );
+                                        } else {
+                                            return (
+                                                <tr key={`${index}.${sIndex}`} className="hover:bg-gray-100">
+                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} />
+                                                </tr>
+                                            );
+                                        }
+                                    });
+                                }
+                                return null;
+                            })
+                        ) : (
+                            <tr>
+                                <td colSpan={8} className="text-center py-4">
+                                    No records found
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
 
-            </table>
-        </div>
+                </table>
+            </div>
+
+
+            {/* 
+                Edit mfo modal below
+            */}
+
+            <MfoEditComponent />
+
+            {/* 
+                Edit success indicator modal below
+            */}
+
+            <dialog id="my_modal_3" className="modal">
+                <div className="modal-box mt-10 w-12/12 max-w-5xl bg-gray-100">
+                    <form method="dialog">
+                        {/* if there is a button in form, it will close the modal */}
+                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                    </form>
+                    <h3 className="font-bold text-lg">SUCCESS INDICATOR:</h3>
+                    <textarea ref={textareaRef} rows={3} defaultValue="" placeholder="Enter success indicator here..." className="textarea textarea-lg textarea-accent w-full mt-5"></textarea>
+
+                    <div className="text-lg mt-5 text font-semibold">QUALITY: </div>
+                    <>
+                        {qualityRefs.map((ref, i) => (
+                            <div key={i} className="mb-1">
+                                <label className="input w-full">
+                                    <b>{i + 1} :</b>
+                                    <input type="text" id={`qualInput` + i} ref={ref} defaultValue="" />
+                                </label>
+                            </div>
+                        ))}
+                    </>
+                    <div className="text-lg mt-5 text font-semibold">EFFICIENCY: </div>
+                    <>
+                        {efficiencyRefs.map((ref, i) => (
+                            <div key={i} className="mb-1">
+                                <label className="input w-full">
+                                    <b>{i + 1} :</b>
+                                    <input type="text" id={`effInput` + i} ref={ref} defaultValue="" />
+                                </label>
+                            </div>
+                        ))}
+                    </>
+                    <div className="text-lg mt-5 text font-semibold">TIMELINESS: </div>
+                    <>
+                        {timelinessRefs.map((ref, i) => (
+                            <div key={i} className="mb-1">
+                                <label className="input w-full">
+                                    <b>{i + 1} :</b>
+                                    <input type="text" id={`timeInput` + i} ref={ref} defaultValue="" className="w-full" />
+                                </label>
+                            </div>
+                        ))}
+                    </>
+
+                    {/* selected={siToEdit?.personnel} */}
+                    <div className="mt-5">
+                        {/* <MultipleSearchSelect 
+                            label="ASSIGNED PERSONNEL:" 
+                            selectedProp={siToEditSelected} 
+                            onChange={setSiToEditSelected} 
+                            options={employeesOption} 
+                            text="full_name" 
+                            value="employee_id" 
+                        /> */}
+
+
+                        <MultipleSearchSelect<EmployeeOption>
+                            label="Select Employees"
+                            selected={siToEditSelected}
+                            options={employeesOption}
+                            textKey="full_name"
+                            valueKey="employee_id"
+                            onChange={setSiToEditSelected}
+                        />
+
+
+                    </div>
+                    {/* multiselect component end */}
+
+                    <div className="mt-5 flex">
+                        <form method="dialog">
+                            <button className="btn mr-3" >Cancel</button>
+                        </form>
+                        <button className="btn btn-primary" onClick={submitEdit}>{saving ? 'Saving...' : 'Save'} </button>
+                    </div>
+
+                </div>
+            </dialog >
+        </div >
     );
 }

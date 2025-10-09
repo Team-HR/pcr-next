@@ -1,6 +1,5 @@
 'use client';
 
-import { logout } from "@/lib/auth/logout";
 import { useRouter, usePathname } from 'next/navigation';
 import { getUser } from "@/lib/auth/getUser";
 import { useEffect, useState } from 'react';
@@ -8,13 +7,13 @@ import { useEffect, useState } from 'react';
 export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<{ username: String }>(); // Replace 'any' with your user type
+  const [user, setUser] = useState<{ username: string }>(); // Replace 'any' with your user type
   const [loading, setLoading] = useState(true);
 
-  async function handleLogout() {
-    await logout();
-    router.push("/login");
-  }
+  // async function handleLogout() {
+  //   await logout();
+  //   router.push("/login");
+  // }
 
   useEffect(() => {
     async function fetchUser() {
@@ -31,7 +30,7 @@ export default function DashboardPage() {
     }
 
     fetchUser();
-  }, [pathname]);
+  }, [pathname, router]);
 
   if (loading) {
     return <div>Loading user data...</div>;

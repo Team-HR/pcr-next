@@ -1,6 +1,6 @@
 import API from '@/lib/axios';
 
-export async function checkAuth(request: Request) {
+export async function checkAuth() {
     try {
         const response = await API.get('/api/user');
         return response.data;

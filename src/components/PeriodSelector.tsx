@@ -6,11 +6,11 @@ import API from "@/lib/axios";
 type PeriodSelectorProps = {
   title?: string;
   description?: string;
-  icon?: string;
+  // icon?: string;
   onSelect?: (periodId: number) => void;
 }
 
-export default function PeriodSelector({ title = "", description = "", icon = "", onSelect }: PeriodSelectorProps) {
+export default function PeriodSelector({ title = "", description = "",  onSelect }: PeriodSelectorProps) {
   const years = [2025, 2024, 2023, 2022];
   const [period, setPeriod] = useState('');
   const [year, setYear] = useState('');
