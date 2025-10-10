@@ -44,7 +44,7 @@ export default function RsmRowComponent({ row, index, onEditonSelect }: RsmRowPr
               rowSpan={row.num_si}
               className="border-1 border-gray-300"
             >
-              <div className="flex"> <div style={{ width: row.indent ? row.indent * 20 : 0 }}></div> <MfoDropdownComponent row={row}/> <div className="ml-2">{row.cf_count} {row.cf_title}</div></div>
+              <div className="flex"> <div style={{ width: row.indent ? row.indent * 20 : 0 }}></div> <MfoDropdownComponent row={row} /> <div className="ml-2">{row.cf_count} {row.cf_title}</div></div>
             </td></>
           : ''
       }
@@ -96,8 +96,8 @@ export default function RsmRowComponent({ row, index, onEditonSelect }: RsmRowPr
         {/* <pre>
           {JSON.stringify(row.success_indicators[index], null, 3)}
         </pre> */}
-        <button className="btn btn-ghost btn-circle mb-1 text-green-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbEdit/></button>
-        <button className="btn btn-ghost btn-circle mb-1 text-red-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbTrash/></button>
+        <button className="btn btn-ghost btn-circle mb-1 text-green-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbEdit /></button>
+        <button className="btn btn-ghost btn-circle mb-1 text-red-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbTrash /></button>
         {/* rIndex: {rowIndex}  sIndex: {index} */}
       </td>
     </>

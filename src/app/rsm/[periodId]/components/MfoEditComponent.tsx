@@ -5,7 +5,12 @@ import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 import { useEffect, useState } from "react";
 import API from "@/lib/axios";
 
-export default function MfoEditComponent() {
+
+type MfoEditComponentType = {
+  doSubmit: () => void
+}
+
+export default function MfoEditComponent({ doSubmit }: MfoEditComponentType) {
 
   const { row, setRow } = useMfoEditModalContext()
 
@@ -16,10 +21,10 @@ export default function MfoEditComponent() {
     // setRow({ ...row!, cf_count: cfData.cf_count, cf_title: cfData.cf_title })
   }, [row])
 
-  const handleSubmit = async () => {
-    await API.patch("/api/mfo/" + row?.cf_ID, cfData);
-    (document.getElementById('mfoEditModal') as HTMLDialogElement)?.close()
-  }
+  // const handleSubmit = async () => {
+  //   await API.patch("/api/mfo/" + row?.cf_ID, cfData);
+  //   (document.getElementById('mfoEditModal') as HTMLDialogElement)?.close()
+  // }
 
   return (
     <>
@@ -38,7 +43,7 @@ export default function MfoEditComponent() {
             </fieldset>
           </div>
           <div className="modal-action">
-            <button className="btn btn-primary" onClick={() => handleSubmit()}><FaSave /> Save</button>
+            <button className="btn btn-primary" onClick={() => doSubmit()}><FaSave /> Save</button>
             <form method="dialog">
               {/* if there is a button in form, it will close the modal */}
               <button className="btn">Cancel</button>
