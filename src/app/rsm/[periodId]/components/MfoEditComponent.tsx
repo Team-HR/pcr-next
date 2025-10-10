@@ -5,30 +5,32 @@ import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 import { useEffect, useState } from "react";
 import API from "@/lib/axios";
 
+type FormData = { cf_ID: number, cf_count: string, cf_title: string };
 
 type MfoEditComponentType = {
-  doSubmit: () => void
+  onSaveSuccess: () => Promise<void> | void
 }
 
-export default function MfoEditComponent({ doSubmit }: MfoEditComponentType) {
+export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType) {
 
-  const { row, setRow } = useMfoEditModalContext()
-
-  const [cfData, setCfData] = useState<{ cf_count: string, cf_title: string }>({ cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
+  const { row } = useMfoEditModalContext()
+  const [isSaving, setIsSaving] = useState(false);
+  const [cfData, setCfData] = useState<FormData>({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
 
   useEffect(() => {
-    setCfData({ cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
-    // setRow({ ...row!, cf_count: cfData.cf_count, cf_title: cfData.cf_title })
+    setCfData({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
   }, [row])
 
-  // const handleSubmit = async () => {
-  //   await API.patch("/api/mfo/" + row?.cf_ID, cfData);
-  //   (document.getElementById('mfoEditModal') as HTMLDialogElement)?.close()
-  // }
+  async function handleSubmit() {
+    setIsSaving(true);
+    await API.patch("api/mfo/" + cfData.cf_ID, { cf_count: cfData.cf_count, cf_title: cfData.cf_title });
+    if (onSaveSuccess) await onSaveSuccess();
+    setIsSaving(false);
+    (document.getElementById("mfoEditModal") as HTMLDialogElement).close()
+  }
 
   return (
     <>
-      {/* <button className="btn btn-ghost btn-sm" onClick={() => (document.getElementById('mfoEditModal' + cf_ID) as HTMLDialogElement)?.showModal()}>{label}</button> */}
       <dialog id="mfoEditModal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Edit MFO/PAP Title</h3>
@@ -43,10 +45,12 @@ export default function MfoEditComponent({ doSubmit }: MfoEditComponentType) {
             </fieldset>
           </div>
           <div className="modal-action">
-            <button className="btn btn-primary" onClick={() => doSubmit()}><FaSave /> Save</button>
+            <button className="btn btn-primary" onClick={() => handleSubmit()}>
+              {isSaving ? <><span className="loading loading-spinner"></span> Saving...</> : <><FaSave /> Save </>}
+            </button>
             <form method="dialog">
               {/* if there is a button in form, it will close the modal */}
-              <button className="btn">Cancel</button>
+              <button className="btn" onClick={() => setCfData({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })}>Cancel</button>
             </form>
           </div>
         </div>

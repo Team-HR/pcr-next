@@ -286,7 +286,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                 Edit mfo modal below
             */}
 
-            <MfoEditComponent doSubmit={() => console.log('test')} />
+            <MfoEditComponent onSaveSuccess={async () => { await reloadRows()}} />
 
             {/* 
                 Edit success indicator modal below
