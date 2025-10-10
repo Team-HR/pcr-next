@@ -8,6 +8,7 @@ import SavingModal from "@/components/SavingModal";
 import MfoDropdownComponent from "./components/MfoDropdownComponent";
 import { useRsmContext } from "../context/RsmContext";
 import MfoEditComponent from "./components/MfoEditComponent";
+import MfoMoverComponent from "./components/MfoMoverComponent";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -286,7 +287,14 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                 Edit mfo modal below
             */}
 
-            <MfoEditComponent onSaveSuccess={async () => { await reloadRows()}} />
+            <MfoEditComponent onSaveSuccess={async () => { await reloadRows() }} />
+
+            {/* 
+                Move mfo modal below
+            */}
+
+            <MfoMoverComponent onSaveSuccess={async () => { await reloadRows() }} />
+
 
             {/* 
                 Edit success indicator modal below

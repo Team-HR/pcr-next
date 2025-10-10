@@ -27,12 +27,26 @@ declare global {
 
   type Row = {
     cf_ID: number,
+    mfo_periodId?: number,
+    parent_id?: number,
     cf_count: string,
     cf_title: string,
     has_si: boolean,
     indent: number,
     num_si: number,
     success_indicators: SuccessIndicator[]
+  }
+
+  type Mfo = {
+    cf_ID: number,
+    cf_count: string,
+    cf_title: string,
+    corrections: string,
+    dep_id: number,
+    indent: number,
+    isDisabled: boolean,
+    mfo_periodId: number,
+    parent_id: number
   }
 
   type EmployeeOption = {
