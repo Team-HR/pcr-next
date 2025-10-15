@@ -45,13 +45,14 @@ export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType
             </fieldset>
           </div>
           <div className="modal-action">
-            <button className="btn btn-primary" onClick={() => handleSubmit()}>
-              {isSaving ? <><span className="loading loading-spinner"></span> Saving...</> : <><FaSave /> Save </>}
-            </button>
             <form method="dialog">
               {/* if there is a button in form, it will close the modal */}
               <button className="btn" onClick={() => setCfData({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })}>Cancel</button>
             </form>
+
+            <button className="btn btn-primary" onClick={() => handleSubmit()}>
+              {isSaving ? <><span className="loading loading-spinner"></span> Saving...</> : <><FaSave /> Save </>}
+            </button>
           </div>
         </div>
       </dialog>

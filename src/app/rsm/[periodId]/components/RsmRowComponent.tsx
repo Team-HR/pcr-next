@@ -2,6 +2,7 @@
 
 import { TbEdit, TbTrash } from "react-icons/tb";
 import MfoDropdownComponent from "./MfoDropdownComponent";
+import API from "@/lib/axios";
 
 // type PeriodSelectorProps = {
 //   title?: string;
@@ -23,16 +24,23 @@ type Row = {
 type RsmRowProps = {
   row: Row,
   index: number,
-  onEditonSelect: (success_indicator: SuccessIndicator) => void;
+  onEditonSelect: (success_indicator: SuccessIndicator) => void,
+  onDelete: (mi_id: number) => void
   // setSiToEdit: Dispatch<SetStateAction<SuccessIndicator | null>>
   // setMiSuccIn: Dispatch<SetStateAction<string>>
 }
 
 
-export default function RsmRowComponent({ row, index, onEditonSelect }: RsmRowProps) {
+export default function RsmRowComponent({ row, index, onEditonSelect, onDelete }: RsmRowProps) {
 
   function editSuccessIndicator(si: SuccessIndicator) {
     onEditonSelect(si)
+  }
+
+  async function deleteSi(mi_id: number) {
+    onDelete(mi_id)
+    // await API.delete("/api/si/" + si.mi_id)
+    // onDeleteSuccess()
   }
 
   return (
@@ -97,7 +105,7 @@ export default function RsmRowComponent({ row, index, onEditonSelect }: RsmRowPr
           {JSON.stringify(row.success_indicators[index], null, 3)}
         </pre> */}
         <button className="btn btn-ghost btn-circle mb-1 text-green-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbEdit /></button>
-        <button className="btn btn-ghost btn-circle mb-1 text-red-600" onClick={() => { editSuccessIndicator(row.success_indicators[index]) }}><TbTrash /></button>
+        <button className="btn btn-ghost btn-circle mb-1 text-red-600" onClick={() => { deleteSi(row.success_indicators[index].mi_id) }}><TbTrash /></button>
         {/* rIndex: {rowIndex}  sIndex: {index} */}
       </td>
     </>

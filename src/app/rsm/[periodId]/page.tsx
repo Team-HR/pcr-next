@@ -9,6 +9,8 @@ import MfoDropdownComponent from "./components/MfoDropdownComponent";
 import { useRsmContext } from "../context/RsmContext";
 import MfoEditComponent from "./components/MfoEditComponent";
 import MfoMoverComponent from "./components/MfoMoverComponent";
+import SiEditComponent from "./components/SiEditComponent";
+import SiDeleteComponent from "./components/SiDeleteComponent";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -33,6 +35,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     const [saving, setSaving] = useState(false);
 
     const [siToEdit, setSiToEdit] = useState<SuccessIndicator | null>(null)
+    const [deleteSiId, setDeleteSiId] = useState<number | null>(null)
 
     // const efficiencyRefs = Array.from({ length: 5 }, () =>
     //     useRef<HTMLInputElement>(null)
@@ -43,7 +46,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     // const timelinessRefs = Array.from({ length: 5 }, () =>
     //     useRef<HTMLInputElement>(null)
     // );
-
 
     // const efficiencyRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
     const efficiencyRefs = [
@@ -80,8 +82,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                 setData(response.data);
             } catch (error) {
                 console.log(error);
-            } finally {
-                setLoading(false);
             }
         }
 
@@ -95,7 +95,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             } catch (error) {
                 console.log(error);
             } finally {
-                // setLoading(false);
+                setLoading(false);
             }
         }
 
@@ -139,7 +139,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         });
 
     }, [siToEdit, efficiencyRefs, qualityRefs, timelinessRefs]);
-
 
     if (loading) {
         return (
@@ -201,10 +200,15 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
     }
 
-
     async function reloadRows() {
         const response = await API.get("/api/rsm/" + periodId);
         setRows(response.data.rows);
+    }
+
+
+    async function promptDeleteSi(mi_id: number | null) {
+        setDeleteSiId(mi_id);
+        (document.getElementById("siDeleteModal") as HTMLDialogElement)?.showModal();
     }
 
     return (
@@ -248,7 +252,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                                 } else if (row.has_si && row.num_si === 1) { // for mfos with only one success indicator
                                     return (
                                         <tr key={index} className="hover:bg-gray-100">
-                                            <RsmRowComponent row={row} index={0} onEditonSelect={editSuccessIndicator} />
+                                            <RsmRowComponent row={row} index={0} onEditonSelect={editSuccessIndicator} onDelete={async (mi_id) => { promptDeleteSi(mi_id) }} />
                                         </tr>
                                     );
                                 } else if (row.has_si && row.num_si > 1) { // for mfos with more than 1 success indicator
@@ -256,13 +260,13 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                                         if (sIndex === 0) {
                                             return (
                                                 <tr key={`${index}.${sIndex}`} className="hover:bg-gray-100">
-                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} />
+                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} onDelete={async (mi_id) => { promptDeleteSi(mi_id) }} />
                                                 </tr>
                                             );
                                         } else {
                                             return (
                                                 <tr key={`${index}.${sIndex}`} className="hover:bg-gray-100">
-                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} />
+                                                    <RsmRowComponent row={row} index={sIndex} onEditonSelect={editSuccessIndicator} onDelete={async (mi_id) => { promptDeleteSi(mi_id) }} />
                                                 </tr>
                                             );
                                         }
@@ -282,23 +286,27 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                 </table>
             </div>
 
-
             {/* 
                 Edit mfo modal below
             */}
-
             <MfoEditComponent onSaveSuccess={async () => { await reloadRows() }} />
 
             {/* 
                 Move mfo modal below
             */}
-
             <MfoMoverComponent onSaveSuccess={async () => { await reloadRows() }} />
-
 
             {/* 
                 Edit success indicator modal below
             */}
+
+            <SiEditComponent employeesOption={employeesOption} onSaveSuccess={async () => { await reloadRows() }} />
+
+            {/* 
+                Delete success indicator modal below
+            */}
+
+            <SiDeleteComponent deleteSiId={deleteSiId} onDeleteSuccess={async () => await reloadRows()} />
 
             <dialog id="my_modal_3" className="modal">
                 <div className="modal-box mt-10 w-12/12 max-w-5xl bg-gray-100">
@@ -314,7 +322,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                         {qualityRefs.map((ref, i) => (
                             <div key={i} className="mb-1">
                                 <label className="input w-full">
-                                    <b>{i + 1} :</b>
+                                    <b>{5 - i} :</b>
                                     <input type="text" id={`qualInput` + i} ref={ref} defaultValue="" />
                                 </label>
                             </div>
@@ -325,7 +333,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                         {efficiencyRefs.map((ref, i) => (
                             <div key={i} className="mb-1">
                                 <label className="input w-full">
-                                    <b>{i + 1} :</b>
+                                    <b>{5 - i} :</b>
                                     <input type="text" id={`effInput` + i} ref={ref} defaultValue="" />
                                 </label>
                             </div>
@@ -336,7 +344,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                         {timelinessRefs.map((ref, i) => (
                             <div key={i} className="mb-1">
                                 <label className="input w-full">
-                                    <b>{i + 1} :</b>
+                                    <b>{5 - i} :</b>
                                     <input type="text" id={`timeInput` + i} ref={ref} defaultValue="" className="w-full" />
                                 </label>
                             </div>
@@ -345,15 +353,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
                     {/* selected={siToEdit?.personnel} */}
                     <div className="mt-5">
-                        {/* <MultipleSearchSelect 
-                            label="ASSIGNED PERSONNEL:" 
-                            selectedProp={siToEditSelected} 
-                            onChange={setSiToEditSelected} 
-                            options={employeesOption} 
-                            text="full_name" 
-                            value="employee_id" 
-                        /> */}
-
 
                         <MultipleSearchSelect<EmployeeOption>
                             label="Select Employees"
@@ -363,7 +362,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                             valueKey="employee_id"
                             onChange={setSiToEditSelected}
                         />
-
 
                     </div>
                     {/* multiselect component end */}

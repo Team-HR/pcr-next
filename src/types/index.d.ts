@@ -9,7 +9,7 @@ declare global {
   };
 
   type SuccessIndicator = {
-    mi_id?: number | null;        // optional, can be number | null | undefined
+    mi_id: number;        // optional, can be number | null | undefined
     cf_ID?: number | null,
     mi_succIn: string;            // required
     perf_measures?: string[];     // optional
@@ -46,7 +46,7 @@ declare global {
     indent: number,
     isDisabled: boolean,
     mfo_periodId: number,
-    parent_id: number
+    parent_id: string
   }
 
   type EmployeeOption = {
