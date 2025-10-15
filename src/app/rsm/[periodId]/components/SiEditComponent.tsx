@@ -1,8 +1,7 @@
 'use client';
 
-import { FaSave } from "react-icons/fa";
 import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import API from "@/lib/axios";
 import MultipleSearchSelect from "@/components/MultipleSearchSelect";
 import SavingModal from "@/components/SavingModal";
@@ -36,7 +35,8 @@ export default function SiEditComponent({ employeesOption, onSaveSuccess }: Comp
   async function handleSubmit() {
 
     try {
-      const response = await API.post("/api/si/save", {
+      setSaving(true)
+      await API.post("/api/si/save", {
         mi_id: null,
         cf_ID: row?.cf_ID,
         successIndicator: siInput,
@@ -45,9 +45,9 @@ export default function SiEditComponent({ employeesOption, onSaveSuccess }: Comp
         timeliness: timelinesses,
         inCharge: selectedPersonnel
       });
-
       (document.getElementById("saving_modal") as HTMLDialogElement)?.showModal();
       if (onSaveSuccess) await onSaveSuccess();
+      setSaving(false);
       (document.getElementById("saving_modal") as HTMLDialogElement)?.close();
       (document.getElementById("siEditModal") as HTMLDialogElement)?.close()
       clearForm()

@@ -37,17 +37,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     const [siToEdit, setSiToEdit] = useState<SuccessIndicator | null>(null)
     const [deleteSiId, setDeleteSiId] = useState<number | null>(null)
 
-    // const efficiencyRefs = Array.from({ length: 5 }, () =>
-    //     useRef<HTMLInputElement>(null)
-    // );
-    // const qualityRefs = Array.from({ length: 5 }, () =>
-    //     useRef<HTMLInputElement>(null)
-    // );
-    // const timelinessRefs = Array.from({ length: 5 }, () =>
-    //     useRef<HTMLInputElement>(null)
-    // );
-
-    // const efficiencyRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
     const efficiencyRefs = [
         useRef<HTMLInputElement>(null),
         useRef<HTMLInputElement>(null),

@@ -2,14 +2,6 @@
 
 import { TbEdit, TbTrash } from "react-icons/tb";
 import MfoDropdownComponent from "./MfoDropdownComponent";
-import API from "@/lib/axios";
-
-// type PeriodSelectorProps = {
-//   title?: string;
-//   description?: string;
-//   icon?: string;
-//   onSelect?: (periodId: number) => void;
-// }
 
 type Row = {
   cf_ID: number,
@@ -26,8 +18,6 @@ type RsmRowProps = {
   index: number,
   onEditonSelect: (success_indicator: SuccessIndicator) => void,
   onDelete: (mi_id: number) => void
-  // setSiToEdit: Dispatch<SetStateAction<SuccessIndicator | null>>
-  // setMiSuccIn: Dispatch<SetStateAction<string>>
 }
 
 
@@ -39,8 +29,6 @@ export default function RsmRowComponent({ row, index, onEditonSelect, onDelete }
 
   async function deleteSi(mi_id: number) {
     onDelete(mi_id)
-    // await API.delete("/api/si/" + si.mi_id)
-    // onDeleteSuccess()
   }
 
   return (

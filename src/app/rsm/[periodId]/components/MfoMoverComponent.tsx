@@ -1,11 +1,8 @@
 'use client';
 
-import { FaSave } from "react-icons/fa";
 import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 import { useEffect, useState } from "react";
 import API from "@/lib/axios";
-
-type FormData = { cf_ID: number, cf_count: string, cf_title: string };
 
 type ComponentType = {
   onSaveSuccess: () => Promise<void> | void
@@ -16,10 +13,6 @@ export default function MfoMoverComponent({ onSaveSuccess }: ComponentType) {
   const { row } = useMfoEditModalContext()
   const [isLoading, setIsLoading] = useState(false);
   const [mfos, setMfos] = useState<Mfo[] | undefined>([]);
-
-  // cf_ID
-  // parent_id
-  // period_id
 
   useEffect(() => {
     async function getMfos() {
@@ -32,14 +25,11 @@ export default function MfoMoverComponent({ onSaveSuccess }: ComponentType) {
 
       setMfos(response.data.rows)
       setIsLoading(false)
-      // console.log("mfos: ", response.data.rows);
     }
     getMfos();
   }, [row])
 
   async function moveMfoTo(new_parent_id: string | number) {
-    // cf_ID
-    // new_parent_id
     await API.post("api/moveMfoToNewParent", {
       cf_ID: row?.cf_ID,
       new_parent_id: new_parent_id
