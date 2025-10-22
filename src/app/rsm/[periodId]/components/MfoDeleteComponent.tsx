@@ -1,29 +1,29 @@
 'use client';
 
 import { useState } from "react";
+import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 import API from "@/lib/axios";
 
 type ComponentType = {
-  deleteSiId: number | null
   onDeleteSuccess: () => Promise<void> | void
 }
 
-export default function SiDeleteComponent({ deleteSiId, onDeleteSuccess }: ComponentType) {
+export default function MfoDeleteComponent({ onDeleteSuccess }: ComponentType) {
 
   const [deleting, setDeleting] = useState(false)
+  const { deleteId } = useMfoEditModalContext()
 
   async function handleSubmit() {
     setDeleting(true)
-    await API.delete("/api/si/" + deleteSiId)
+    await API.delete("/api/mfo/" + deleteId)
     if (onDeleteSuccess) await onDeleteSuccess();
-    // 
-    (document.getElementById("siDeleteModal") as HTMLDialogElement)?.close()
+    (document.getElementById("MfoDeleteModal") as HTMLDialogElement)?.close()
     setDeleting(false)
   }
 
   return (
     <>
-      <dialog id="siDeleteModal" className="modal">
+      <dialog id="MfoDeleteModal" className="modal">
         <div className="modal-box mt-10 bg-gray-100">
           <form method="dialog">
             {/* if there is a button in form, it will close the modal */}
@@ -32,7 +32,7 @@ export default function SiDeleteComponent({ deleteSiId, onDeleteSuccess }: Compo
 
           <div className="mt-5">
 
-            <h3>Confirm delete success indicator.</h3>
+            <h3>Warning! Confirm delete MFO.</h3>
 
           </div>
           {/* multiselect component end */}

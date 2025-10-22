@@ -6,7 +6,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
     return (
         <RsmProvider>
             <MfoEditModalProvider>
-                {children}
+                    {children}
             </MfoEditModalProvider>
         </RsmProvider>
     )

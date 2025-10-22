@@ -1,9 +1,8 @@
 "use client";
 
 import API from "@/lib/axios";
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useState } from "react";
 import RsmRowComponent from "./components/RsmRowComponent";
-import MultipleSearchSelect from "@/components/MultipleSearchSelect";
 import SavingModal from "@/components/SavingModal";
 import MfoDropdownComponent from "./components/MfoDropdownComponent";
 import { useRsmContext } from "../context/RsmContext";
@@ -11,6 +10,8 @@ import MfoEditComponent from "./components/MfoEditComponent";
 import MfoMoverComponent from "./components/MfoMoverComponent";
 import SiEditComponent from "./components/SiEditComponent";
 import SiDeleteComponent from "./components/SiDeleteComponent";
+import MfoDeleteComponent from "./components/MfoDeleteComponent";
+import { useMfoEditModalContext } from "../context/MfoEditModalContext";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -25,44 +26,11 @@ type Header = {
 export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     const { periodId } = use(params);
     const [data, setData] = useState<Header>();
-    // const [rows, setRows] = useState<Row[] | undefined>(undefined) // useRsmContext();
     const { rows, setRows } = useRsmContext();
-
     const [employeesOption, setEmployeeOption] = useState<EmployeeOption[]>([])
-    const [siToEditSelected, setSiToEditSelected] = useState<EmployeeOption[]>([])
-
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-
-    const [siToEdit, setSiToEdit] = useState<SuccessIndicator | null>(null)
     const [deleteSiId, setDeleteSiId] = useState<number | null>(null)
-
-    const efficiencyRefs = [
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-    ];
-    // const qualityRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
-    const qualityRefs = [
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-    ];
-
-    // const timelinessRefs = [0, 1, 2, 3, 4].map(() => useRef<HTMLInputElement>(null));
-    const timelinessRefs = [
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-        useRef<HTMLInputElement>(null),
-    ];
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { setSi } = useMfoEditModalContext();
 
     useEffect(() => {
         async function getRatingScaleMatrixInfo() {
@@ -79,8 +47,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             try {
                 const response = await API.get("/api/rsm/" + periodId);
                 setRows(response.data.rows);
-                console.log('rows:', response.data.rows);
-
             } catch (error) {
                 console.log(error);
             } finally {
@@ -92,7 +58,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             try {
                 const response = await API.get("/api/getAllEmployees");
                 setEmployeeOption(response.data)
-                console.log("getEmployeesOption:", response.data);
             } catch (error) {
                 console.log(error);
             }
@@ -103,32 +68,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         getEmployeesOption()
     }, [periodId, setRows]);
 
-
-    useEffect(() => {
-        if (siToEdit && textareaRef.current) {
-            textareaRef.current.value = siToEdit?.mi_succIn || "";
-        }
-
-        qualityRefs.forEach((ref, i) => {
-            if (siToEdit && ref?.current) {
-                ref.current.value = siToEdit.quality?.[i] ?? "";
-            }
-        })
-
-        efficiencyRefs.forEach((ref, i) => {
-            if (siToEdit && ref?.current) {
-                ref.current.value = siToEdit.efficiency?.[i] ?? "";
-            }
-        })
-
-        timelinessRefs.forEach((ref, i) => {
-            if (siToEdit && ref?.current) {
-                ref.current.value = siToEdit.timeliness?.[i] ?? "";
-            }
-        });
-
-    }, [siToEdit, efficiencyRefs, qualityRefs, timelinessRefs]);
-
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen text-xl">
@@ -137,63 +76,15 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         );
     }
 
-    const editSuccessIndicator = (data: SuccessIndicator) => {
-        setSiToEdit(data);
-        setSiToEditSelected(data.personnel ?? [])
-        console.log('siToEdit:', data);
-        (document.getElementById('my_modal_3') as HTMLDialogElement).showModal();
-    }
-
-    async function submitEdit() {
-        setSaving(true);
-        (document.getElementById('saving_modal') as HTMLDialogElement).showModal();
-        const mi_id = siToEdit?.mi_id;
-        const cf_ID = siToEdit?.cf_ID;
-        const successIndicator = textareaRef.current?.value;
-
-        const qualityArr = [];
-        for (let index = 0; index < qualityRefs.length; index++) {
-            qualityArr.push(qualityRefs[index].current?.value)
-        }
-
-        const efficiencyArr = [];
-        for (let index = 0; index < efficiencyRefs.length; index++) {
-            efficiencyArr.push(efficiencyRefs[index].current?.value)
-        }
-
-        const timelinessArr = [];
-        for (let index = 0; index < timelinessRefs.length; index++) {
-            timelinessArr.push(timelinessRefs[index].current?.value)
-        }
-
-        try {
-            await API.post("/api/si/save", {
-                mi_id: mi_id,
-                cf_ID: cf_ID,
-                successIndicator: successIndicator,
-                quality: qualityArr,
-                efficiency: efficiencyArr,
-                timeliness: timelinessArr,
-                inCharge: siToEditSelected
-            });
-
-            await reloadRows();
-
-            (document.getElementById('my_modal_3') as HTMLDialogElement).close();
-            setSaving(false);
-            (document.getElementById('saving_modal') as HTMLDialogElement).close();
-
-        } catch (error) {
-            alert(error)
-        }
-
+    const editSuccessIndicator = (successIndicator: SuccessIndicator) => {
+        setSi(successIndicator);
+        (document.getElementById('siEditModal') as HTMLDialogElement)?.showModal()
     }
 
     async function reloadRows() {
         const response = await API.get("/api/rsm/" + periodId);
         setRows(response.data.rows);
     }
-
 
     async function promptDeleteSi(mi_id: number | null) {
         setDeleteSiId(mi_id);
@@ -203,10 +94,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     return (
         <div>
             <SavingModal />
-            {/* multiselect component start */}
-            {/* <div className="mt- flex justify-center">
-                Rating Scale Matrix
-            </div> */}
             <div className="text-xl flex justify-center">{data?.department?.department}</div>
             <div className="text-lg flex justify-center">{data?.period} {data?.year}</div>
             <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 h-screen">
@@ -297,73 +184,12 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
             <SiDeleteComponent deleteSiId={deleteSiId} onDeleteSuccess={async () => await reloadRows()} />
 
-            <dialog id="my_modal_3" className="modal">
-                <div className="modal-box mt-10 w-12/12 max-w-5xl bg-gray-100">
-                    <form method="dialog">
-                        {/* if there is a button in form, it will close the modal */}
-                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                    </form>
-                    <h3 className="font-bold text-lg">SUCCESS INDICATOR:</h3>
-                    <textarea ref={textareaRef} rows={3} defaultValue="" placeholder="Enter success indicator here..." className="textarea textarea-lg textarea-accent w-full mt-5"></textarea>
+            {/* 
+                Delete MFO modal below
+            */}
 
-                    <div className="text-lg mt-5 text font-semibold">QUALITY: </div>
-                    <>
-                        {qualityRefs.map((ref, i) => (
-                            <div key={i} className="mb-1">
-                                <label className="input w-full">
-                                    <b>{5 - i} :</b>
-                                    <input type="text" id={`qualInput` + i} ref={ref} defaultValue="" />
-                                </label>
-                            </div>
-                        ))}
-                    </>
-                    <div className="text-lg mt-5 text font-semibold">EFFICIENCY: </div>
-                    <>
-                        {efficiencyRefs.map((ref, i) => (
-                            <div key={i} className="mb-1">
-                                <label className="input w-full">
-                                    <b>{5 - i} :</b>
-                                    <input type="text" id={`effInput` + i} ref={ref} defaultValue="" />
-                                </label>
-                            </div>
-                        ))}
-                    </>
-                    <div className="text-lg mt-5 text font-semibold">TIMELINESS: </div>
-                    <>
-                        {timelinessRefs.map((ref, i) => (
-                            <div key={i} className="mb-1">
-                                <label className="input w-full">
-                                    <b>{5 - i} :</b>
-                                    <input type="text" id={`timeInput` + i} ref={ref} defaultValue="" className="w-full" />
-                                </label>
-                            </div>
-                        ))}
-                    </>
+            <MfoDeleteComponent onDeleteSuccess={async () => await reloadRows()} />
 
-                    {/* selected={siToEdit?.personnel} */}
-                    <div className="mt-5">
-
-                        <MultipleSearchSelect<EmployeeOption>
-                            label="Select Employees"
-                            selected={siToEditSelected}
-                            options={employeesOption}
-                            textKey="full_name"
-                            valueKey="employee_id"
-                            onChange={setSiToEditSelected}
-                        />
-
-                    </div>
-                    {/* multiselect component end */}
-
-                    <div className="mt-5 flex">
-                        <form method="dialog">
-                            <button className="btn mr-3" >Cancel</button>
-                        </form>
-                        <button className="btn btn-primary" onClick={submitEdit}>{saving ? 'Saving...' : 'Save'} </button>
-                    </div>
-
-                </div>
-            </dialog >
         </div >
     );
 }

@@ -5,7 +5,12 @@ import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 import { useEffect, useState } from "react";
 import API from "@/lib/axios";
 
-type FormData = { cf_ID: number, cf_count: string, cf_title: string };
+type FormType = {
+  parent_id: number,
+  cf_ID: number,
+  cf_count: string,
+  cf_title: string
+};
 
 type MfoEditComponentType = {
   onSaveSuccess: () => Promise<void> | void
@@ -13,17 +18,41 @@ type MfoEditComponentType = {
 
 export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType) {
 
-  const { row } = useMfoEditModalContext()
+  const { row, editType } = useMfoEditModalContext()
   const [isSaving, setIsSaving] = useState(false);
-  const [cfData, setCfData] = useState<FormData>({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
+  const [cfData, setCfData] = useState<FormType>({ parent_id: row?.parent_id ?? 0, cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
 
   useEffect(() => {
-    setCfData({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
-  }, [row])
+    if (editType == 'edit') {
+      setCfData({ parent_id: row?.parent_id ?? 0, cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
+    } else if (editType == 'sub') {
+      setCfData({ parent_id: 0, cf_ID: 0, cf_count: '', cf_title: '' })
+    }
+  }, [editType, row])
 
   async function handleSubmit() {
     setIsSaving(true);
-    await API.patch("api/mfo/" + cfData.cf_ID, { cf_count: cfData.cf_count, cf_title: cfData.cf_title });
+    if (editType == 'edit') {
+      await API.patch("api/mfo/" + cfData.cf_ID, { cf_count: cfData.cf_count, cf_title: cfData.cf_title });
+    } else if (editType == 'sub') {
+
+      // period_id;
+      // parent_id
+      // cf_count
+      // cf_title
+      const response = await API.post("api/mfo/sub", {
+        period_id: row?.mfo_periodId,
+        parent_id: row?.cf_ID,
+        cf_count: cfData.cf_count,
+        cf_title: cfData.cf_title
+      });
+      
+      console.log(response);
+
+    } else if (editType == 'new') {
+      console.log('add new');
+    }
+
     if (onSaveSuccess) await onSaveSuccess();
     setIsSaving(false);
     (document.getElementById("mfoEditModal") as HTMLDialogElement).close()
@@ -47,7 +76,7 @@ export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType
           <div className="modal-action">
             <form method="dialog">
               {/* if there is a button in form, it will close the modal */}
-              <button className="btn" onClick={() => setCfData({ cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })}>Cancel</button>
+              <button className="btn" onClick={() => setCfData({ parent_id: row?.parent_id ?? 0, cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })}>Cancel</button>
             </form>
 
             <button className="btn btn-primary" onClick={() => handleSubmit()}>

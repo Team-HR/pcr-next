@@ -4,12 +4,19 @@ import { FaGears } from "react-icons/fa6";
 import { TbAxisX, TbCursorText, TbEraser, TbTargetArrow, TbTransferVertical } from "react-icons/tb";
 import { useMfoEditModalContext } from "../../context/MfoEditModalContext";
 
-export default function EditMfoComponent({ row }: { row: Row }) {
+export default function MfoDropdownComponent({ row }: { row: Row }) {
 
-  const { setRow } = useMfoEditModalContext();
+  const { setRow, setEditType, setDeleteId, setSi } = useMfoEditModalContext();
 
   function handleMfoEdit(row: Row) {
     (document.getElementById('mfoEditModal') as HTMLDialogElement)?.showModal()
+    setEditType('edit')
+    setRow(row)
+  }
+
+  function handleAddSubMfo(row: Row) {
+    (document.getElementById('mfoEditModal') as HTMLDialogElement)?.showModal()
+    setEditType('sub')
     setRow(row)
   }
 
@@ -20,7 +27,15 @@ export default function EditMfoComponent({ row }: { row: Row }) {
 
   function handleSiEdit(row: Row) {
     (document.getElementById('siEditModal') as HTMLDialogElement)?.showModal()
+    setRow(undefined)
     setRow(row)
+    setSi(undefined)
+  }
+
+  function handleDeleteMfo(row: Row) {
+    (document.getElementById('MfoDeleteModal') as HTMLDialogElement)?.showModal()
+    setDeleteId(row.cf_ID)
+    // onPromptDeleteMfo(row.cf_ID)
   }
 
 
@@ -32,8 +47,8 @@ export default function EditMfoComponent({ row }: { row: Row }) {
         <li><a onClick={() => handleMfoEdit(row)}><TbCursorText /> Edit MFO Title</a></li>
         <li><a onClick={() => handleSiEdit(row)}><TbTargetArrow /> Add Success Indicator</a></li>
         <li><a onClick={() => handleMfoMover(row)}><TbTransferVertical /> Transfer MFO</a></li>
-        <li><a><TbAxisX />Add Sub-MFO</a></li>
-        <li><a className="text-red-600"><TbEraser />Delete MFO</a></li>
+        <li><a onClick={() => handleAddSubMfo(row)}><TbAxisX />Add Sub-MFO</a></li>
+        <li><a onClick={() => handleDeleteMfo(row)} className="text-red-600"><TbEraser />Delete MFO</a></li>
       </ul>
     </div >
   );

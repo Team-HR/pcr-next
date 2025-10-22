@@ -3,28 +3,18 @@
 import { TbEdit, TbTrash } from "react-icons/tb";
 import MfoDropdownComponent from "./MfoDropdownComponent";
 
-type Row = {
-  cf_ID: number,
-  cf_count: string,
-  cf_title: string,
-  has_si: boolean,
-  indent: number,
-  num_si: number,
-  success_indicators: SuccessIndicator[] | []
-}
-
 type RsmRowProps = {
   row: Row,
   index: number,
-  onEditonSelect: (success_indicator: SuccessIndicator) => void,
+  onEditonSelect: (successIndicator: SuccessIndicator) => void,
   onDelete: (mi_id: number) => void
 }
 
 
 export default function RsmRowComponent({ row, index, onEditonSelect, onDelete }: RsmRowProps) {
 
-  function editSuccessIndicator(si: SuccessIndicator) {
-    onEditonSelect(si)
+  function editSuccessIndicator(successIndicator: SuccessIndicator) {
+    onEditonSelect(successIndicator)
   }
 
   async function deleteSi(mi_id: number) {
