@@ -5,6 +5,8 @@ import React, { createContext, useContext, ReactNode, useState } from "react";
 type MfoEditModalType = {
     row: Row | undefined
     setRow: React.Dispatch<React.SetStateAction<Row | undefined>>
+    periodId: string | undefined
+    setPeriodId: React.Dispatch<React.SetStateAction<string | undefined>>
     editType: string
     setEditType: React.Dispatch<React.SetStateAction<string>>
     deleteId: number
@@ -19,6 +21,7 @@ const MfoEditModalContext = createContext<MfoEditModalType | undefined>(undefine
 export const MfoEditModalProvider = ({ children }: { children: ReactNode }) => {
 
     const [row, setRow] = useState<Row | undefined>(undefined)
+    const [periodId, setPeriodId] = useState<string | undefined>(undefined)
     const [editType, setEditType] = useState<string>('new') // new | edit | sub
     const [deleteId, setDeleteId] = useState<number>(0)
 
@@ -26,7 +29,7 @@ export const MfoEditModalProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <MfoEditModalContext.Provider value={{
-            row, setRow, editType, setEditType, deleteId, setDeleteId, si, setSi
+            row, setRow, periodId, setPeriodId, editType, setEditType, deleteId, setDeleteId, si, setSi
         }}>
             {children}
         </MfoEditModalContext.Provider>

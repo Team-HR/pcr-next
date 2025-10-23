@@ -18,14 +18,14 @@ type MfoEditComponentType = {
 
 export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType) {
 
-  const { row, editType } = useMfoEditModalContext()
+  const { row, periodId, editType } = useMfoEditModalContext()
   const [isSaving, setIsSaving] = useState(false);
   const [cfData, setCfData] = useState<FormType>({ parent_id: row?.parent_id ?? 0, cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
 
   useEffect(() => {
     if (editType == 'edit') {
       setCfData({ parent_id: row?.parent_id ?? 0, cf_ID: row?.cf_ID ?? 0, cf_count: row?.cf_count ?? '', cf_title: row?.cf_title ?? '' })
-    } else if (editType == 'sub') {
+    } else {
       setCfData({ parent_id: 0, cf_ID: 0, cf_count: '', cf_title: '' })
     }
   }, [editType, row])
@@ -35,22 +35,20 @@ export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType
     if (editType == 'edit') {
       await API.patch("api/mfo/" + cfData.cf_ID, { cf_count: cfData.cf_count, cf_title: cfData.cf_title });
     } else if (editType == 'sub') {
-
-      // period_id;
-      // parent_id
-      // cf_count
-      // cf_title
-      const response = await API.post("api/mfo/sub", {
+      await API.post("api/mfo/sub", {
         period_id: row?.mfo_periodId,
         parent_id: row?.cf_ID,
         cf_count: cfData.cf_count,
         cf_title: cfData.cf_title
       });
-      
-      console.log(response);
-
     } else if (editType == 'new') {
-      console.log('add new');
+      await API.post("api/mfo", {
+        newMfo: {
+          period_id: periodId,
+          cf_count: cfData.cf_count,
+          cf_title: cfData.cf_title
+        }
+      });
     }
 
     if (onSaveSuccess) await onSaveSuccess();
@@ -62,7 +60,7 @@ export default function MfoEditComponent({ onSaveSuccess }: MfoEditComponentType
     <>
       <dialog id="mfoEditModal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Edit MFO/PAP Title</h3>
+          <h3 className="font-bold text-lg">{editType == 'new' ? 'Add New' : editType == 'edit' ? 'Rename' : 'Add Sub'} MFO/PAP Title</h3>
           <div className="flex gap-1 mt-5">
             <fieldset className="fieldset w-30">
               <legend className="fieldset-legend">Code:</legend>

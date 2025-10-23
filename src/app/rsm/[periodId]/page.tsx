@@ -12,6 +12,7 @@ import SiEditComponent from "./components/SiEditComponent";
 import SiDeleteComponent from "./components/SiDeleteComponent";
 import MfoDeleteComponent from "./components/MfoDeleteComponent";
 import { useMfoEditModalContext } from "../context/MfoEditModalContext";
+import { TbCirclePlus } from "react-icons/tb";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -26,11 +27,12 @@ type Header = {
 export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     const { periodId } = use(params);
     const [data, setData] = useState<Header>();
-    const { rows, setRows } = useRsmContext();
     const [employeesOption, setEmployeeOption] = useState<EmployeeOption[]>([])
     const [loading, setLoading] = useState(true);
     const [deleteSiId, setDeleteSiId] = useState<number | null>(null)
-    const { setSi } = useMfoEditModalContext();
+
+    const { rows, setRows } = useRsmContext();
+    const { setSi, setRow, setPeriodId, setEditType } = useMfoEditModalContext();
 
     useEffect(() => {
         async function getRatingScaleMatrixInfo() {
@@ -91,12 +93,19 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         (document.getElementById("siDeleteModal") as HTMLDialogElement)?.showModal();
     }
 
+    function handleAddNewMfo() {
+        (document.getElementById('mfoEditModal') as HTMLDialogElement)?.showModal()
+        setPeriodId(periodId)
+        setEditType('new')
+        setRow(undefined)
+    }
+
     return (
-        <div>
+        <div className="relative">
             <SavingModal />
             <div className="text-xl flex justify-center">{data?.department?.department}</div>
             <div className="text-lg flex justify-center">{data?.period} {data?.year}</div>
-            <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 h-screen">
+            <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 _h-screen">
                 <table className="table table-pin-rows table-pin-cols">
                     <thead>
                         <tr className="text-center">
@@ -158,7 +167,6 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                             </tr>
                         )}
                     </tbody>
-
                 </table>
             </div>
 
@@ -189,6 +197,8 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             */}
 
             <MfoDeleteComponent onDeleteSuccess={async () => await reloadRows()} />
+
+            <button className="btn btn-primary fixed bottom-10 left-10" onClick={handleAddNewMfo}> <TbCirclePlus />Add MFO</button>
 
         </div >
     );

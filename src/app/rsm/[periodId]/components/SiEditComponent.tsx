@@ -119,7 +119,7 @@ export default function SiEditComponent({ employeesOption, onSaveSuccess }: Comp
       <div className="text-lg mt-5 font-semibold">{label}:</div>
       {values.map((val, i) => {
         return i < 5 ? <div key={i} className="mb-1">
-          <label className="input w-full flex items-center gap-2">
+          <label className="input input-sm w-full flex items-center gap-2">
             <b>{5 - i}:</b>
             <input
               type="text"
