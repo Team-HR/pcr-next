@@ -72,8 +72,8 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen text-xl">
-                Loading Rating Scale Matrix...
+            <div className="flex justify-center items-center text-xl">
+                <div className="card bg-white p-10 mt-75">Loading Rating Scale Matrix...</div>
             </div>
         );
     }
@@ -198,7 +198,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
             <MfoDeleteComponent onDeleteSuccess={async () => await reloadRows()} />
 
-            <button className="btn btn-primary fixed bottom-10 left-10" onClick={handleAddNewMfo}> <TbCirclePlus />Add MFO</button>
+            <button className="btn btn-primary fixed bottom-5 left-5" onClick={handleAddNewMfo}> <TbCirclePlus />Add MFO</button>
 
         </div >
     );
