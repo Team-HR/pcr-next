@@ -2,3 +2,47 @@
 @plugin "daisyui";
 
 
+body {
+    background-image: url('/background-image.jpg');
+    /* Place your image in /public */
+    background-size: cover;
+    /* Scales image to cover screen */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    /* Keeps it fixed while scrolling (optional) */
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    /* Remove body background when printing */
+    body {
+        background: none !important;
+        -webkit-print-color-adjust: exact;
+        /* keeps other colors consistent */
+    }
+
+    /* ✅ Apply to only this table */
+    table.no-break,
+    table.no-break tr,
+    table.no-break td,
+    table.no-break th {
+        page-break-inside: avoid !important;
+    }
+
+    table.no-break thead {
+        display: table-header-group;
+    }
+
+    table.no-break tfoot {
+        display: table-footer-group;
+    }
+
+    div.no-margin {
+        margin: 0px;
+    }
+
+}

@@ -60,7 +60,7 @@ export default function Navbar() {
   ]
 
   return (
-    <div className="navbar bg-base-100 shadow-sm">
+    <div className="navbar bg-base-100 shadow-md no-print">
       <div className="flex flex-1">
         {/* <Link className="btn btn-lg btn-ghost text-xl" href={'/dashboard'}> </Link> */}
         <Image src={'/pcr-logo.png'} alt="pcr" width={50} height={50} className="mr-2" style={{ width: 'auto' }} priority />

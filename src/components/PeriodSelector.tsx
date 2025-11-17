@@ -10,10 +10,10 @@ type PeriodSelectorProps = {
   onSelect?: (periodId: number) => void;
 }
 
-export default function PeriodSelector({ title = "", description = "",  onSelect }: PeriodSelectorProps) {
+export default function PeriodSelector({ title = "", description = "", onSelect }: PeriodSelectorProps) {
   const years = [2025, 2024, 2023, 2022];
-  const [period, setPeriod] = useState('');
-  const [year, setYear] = useState('');
+  const [period, setPeriod] = useState('January - June');
+  const [year, setYear] = useState('2025');
 
   async function getMfoPeriodId() {
 
@@ -38,7 +38,7 @@ export default function PeriodSelector({ title = "", description = "",  onSelect
 
   return (
     <div>
-      <div className='flex justify-center mt-10'>
+      <div className='flex justify-center'>
         <div className='text-3xl'>{title}</div>
       </div>
       <div className='flex justify-center mb-5'>
