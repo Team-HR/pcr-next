@@ -2,27 +2,48 @@
 export { };
 
 declare global {
+  type ActualAccomplishment = {
+    cfd_id: number;
+    type: string;
+    p_id: number;
+    empId: number;
+    actualAcc: string;
+    Q: string;
+    E: string;
+    T: string;
+    remarks: string;
+    supEdit: string | null;
+    dhEdit: string | null;
+    pmtEdit: string | null;
+    critics: string | null;
+    disable: string | null;
+    percent: number;
+    A: string | null;
+  };
+
   type Personnel = {
     employee_id: number;
     full_name: string;
-    actual_accomplishment?: string;
+    actual_accomplishment?: ActualAccomplishment;
   };
 
   type SuccessIndicator = {
-    mi_id: number;        // optional, can be number | null | undefined
-    cf_ID?: number | null,
-    mi_succIn: string;            // required
-    perf_measures?: string[];     // optional
-    personnel?: Personnel[];      // optional
-
-    has_quality?: boolean;        // optional flags
-    quality?: string[];
-
+    mi_id: number;
+    cf_ID?: number | null;
+    mi_succIn: string;
+    mi_quality?: string;
+    mi_eff?: string;
+    mi_time?: string;
+    mi_incharge?: string;
+    corrections?: string;
+    has_quality?: boolean;
+    quality?: string[] | null;
     has_efficiency?: boolean;
-    efficiency?: string[];
-
+    efficiency?: string[] | null;
     has_timeliness?: boolean;
-    timeliness?: string[];
+    timeliness?: string[] | null;
+    perf_measures?: string[];
+    personnel?: Personnel[];
   };
 
   type Row = {
@@ -90,6 +111,27 @@ declare global {
     parent?: CoreFunction;
     children?: CoreFunction[];
   }
+
+  type MfoData = {
+    cf_ID: number;
+    mfo_periodId: number;
+    parent_id: string;
+    dep_id: number;
+    cf_count: string;
+    cf_title: string;
+    corrections: string;
+    indent: number;
+    is_mfo: boolean;
+    has_si: boolean;
+    num_si: number;
+    success_indicators: SuccessIndicator[];
+  };
+
+  type CoreFunctionData = {
+    mfo: MfoData;
+    success_indicator: SuccessIndicator | null;
+    acctual_accomplishment: ActualAccomplishment | null;
+  };
 
 
 

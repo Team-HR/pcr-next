@@ -3,6 +3,8 @@
 import API from "@/lib/axios";
 import { routes } from "@/types/routes";
 import { use, useEffect, useState } from "react";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import AccomplishmentFormModal from "@/components/AccomplishmentFormModal";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -25,18 +27,18 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
     });
 
 
-    const [coreFunctions, setCoreFunctions] = useState<CoreFunction[] | []>([]);
+    const [coreFunctions, setCoreFunctions] = useState<CoreFunctionData[]>([]);
+
+    async function getCoreFunctions() {
+        // const res = await API.get(routes.coreFunction.show(periodId, 32))
+        // console.log(res.data);
+        // setCoreFunctions(res.data)
+        const res = await API.get('/api/pcr/' + periodId + '/core')
+        console.log(res.data);
+        setCoreFunctions(res.data)
+    }
 
     useEffect(() => {
-        async function getCoreFunctions() {
-            // const res = await API.get(routes.coreFunction.show(periodId, 32))
-            // console.log(res.data);
-            // setCoreFunctions(res.data)
-            const res = await API.get('/api/pcr/' + periodId + '/core')
-            console.log(res.data);
-            setCoreFunctions(res.data)
-        }
-
         async function getStratFunction() {
             // const res = await API.get(routes.stratFunction.show(periodId, 9))
             // console.log('getStratFunction: ', res.data);
@@ -47,14 +49,106 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
 
     }, [periodId])
 
+    const [accomplishmentToClear, setAccomplishmentToClear] = useState<ActualAccomplishment | null>(null);
+    const [isClearing, setIsClearing] = useState(false);
 
-    return (
-        <div className="bg-white">
-            <pre>
-                {JSON.stringify(coreFunctions, null, 2)}
-            </pre>
-        </div>
-    )
+    const [accomplishmentToEdit, setAccomplishmentToEdit] = useState<{
+        accomplishment: ActualAccomplishment | null;
+        successIndicator: SuccessIndicator | null;
+    } | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    function openClearModal(actualAcc: ActualAccomplishment | null) {
+        setAccomplishmentToClear(actualAcc);
+        setIsClearing(false);
+        (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.showModal();
+    }
+
+    function openAddModal(successIndicator: SuccessIndicator | null) {
+        setAccomplishmentToEdit({
+            accomplishment: null,
+            successIndicator: successIndicator,
+        });
+        (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
+    }
+
+    function openEditModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
+        setAccomplishmentToEdit({
+            accomplishment: accomplishment,
+            successIndicator: successIndicator,
+        });
+        (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
+    }
+
+    async function clearSi() {
+        if (accomplishmentToClear) {
+            setIsClearing(true);
+            try {
+                await API.delete('/api/pcr/accomplishment/' + accomplishmentToClear.cfd_id)
+                await getCoreFunctions();
+                setAccomplishmentToClear(null);
+                console.log("Successfully cleared actual accomplishment:", accomplishmentToClear);
+                // Close modal after operations complete
+                (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.close();
+            } catch (error) {
+                console.error("Error clearing accomplishment:", error);
+                // Keep modal open on error so user can retry
+            } finally {
+                setIsClearing(false);
+            }
+        }
+    }
+
+    async function handleAccomplishmentSubmit(data: {
+        actualAcc: string;
+        Q: string;
+        E: string;
+        T: string;
+        A: string;
+        remarks: string;
+        percent: number;
+    }) {
+        if (!accomplishmentToEdit?.successIndicator) return;
+
+        setIsSaving(true);
+        try {
+            const payload = {
+                p_id: accomplishmentToEdit.successIndicator.mi_id,
+                empId: ratee.id,
+                actualAcc: data.actualAcc,
+                Q: data.Q,
+                E: data.E,
+                T: data.T,
+                A: data.A || null,
+                remarks: data.remarks,
+                percent: data.percent || 0,
+            };
+
+            if (accomplishmentToEdit.accomplishment) {
+                // Update existing
+                await API.put('/api/pcr/accomplishment/' + accomplishmentToEdit.accomplishment.cfd_id, payload);
+            } else {
+                // Create new
+                await API.post('/api/pcr/accomplishment', payload);
+            }
+
+            await getCoreFunctions();
+            setAccomplishmentToEdit(null);
+        } catch (error) {
+            console.error("Error saving accomplishment:", error);
+            throw error; // Re-throw to keep modal open
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    // return (
+    //     <div className="bg-white">
+    //         <pre>
+    //             {JSON.stringify(coreFunctions, null, 2)}
+    //         </pre>
+    //     </div>
+    // )
 
 
     return (
@@ -140,59 +234,93 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                             </tr>
                             <tr>
                                 <td colSpan={10} className="border border-gray-400 p-2 text-center">
-                                    <button className="btn btn-primary btn-xs">Add Accomplishment</button>
-                                    <button className="btn btn-xs ml-2">Not Applicable</button>
+                                    <button className="btn btn-sm btn-primary" onClick={() => openAddModal(null)}>Add Accomplishment</button>
+                                    <button className="btn btn-sm ml-2">Not Applicable</button>
                                 </td>
                             </tr>
-                            {/* <tr>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2 text-center">
-                                    <button className="btn btn-primary mr-2 btn-xs">Edit</button>
-                                    <button className="btn btn-xs">Remove</button>
-                                </td>
-                            </tr> */}
+
                             {/* strategic end*/}
                             {/* core functions start */}
                             <tr className="h-10">
                                 <td colSpan={10} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">80%</span>)</td>
                             </tr>
 
-                            {/* <tr>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                            </tr> */}
-
                             {
-                                coreFunctions ? coreFunctions.map((coreFunc) => {
-                                    return <tr key={coreFunc.id}>
-                                        <td className="border border-gray-400 p-2">{coreFunc.order} {coreFunc.title}</td>
-                                        <td className="border border-gray-400 p-2">n/a</td>
-                                        <td className="border border-gray-400 p-2">n/a</td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                        <td className="border border-gray-400 p-2">n/a</td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                        <td className="border border-gray-400 p-2"></td>
-                                    </tr>
-                                }) : ''
+                                coreFunctions ? coreFunctions.map((coreFunc, key) => {
+                                    if (coreFunc.mfo) {
+                                        if (!coreFunc.mfo.has_si) {
+                                            return <tr key={key}>
+                                                <td colSpan={10} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
+                                            </tr>
+                                        } else
+                                            return <tr key={key}>
+                                                <td className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
+                                                <td className="border border-gray-400 p-2">
+                                                    {
+                                                        coreFunc.success_indicator?.mi_succIn
+                                                    }
+                                                </td>
+                                                {coreFunc.acctual_accomplishment ? (
+                                                    <>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.E}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
+                                                        <td className="border border-gray-400 p-2"></td>
+                                                        <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
+                                                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
+                                                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td colSpan={8} className="border border-gray-400 p-2 text-center">
+                                                            <button className="btn btn-sm btn-primary mr-2" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
+                                                            <button className="btn btn-sm">Not Applicable</button>
+                                                        </td>
+                                                    </>
+                                                )}
+                                            </tr>
+                                    } else {
+                                        // for other success indicator in an mfo with multiple SI's
+                                        return <tr key={key}>
+                                            <td className="border border-gray-400 p-2"></td>
+                                            <td className="border border-gray-400 p-2">
+                                                {
+                                                    coreFunc.success_indicator?.mi_succIn
+                                                }
+                                            </td>
+                                            {coreFunc.acctual_accomplishment ? (
+                                                <>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.E}</td>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
+                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
+                                                    <td className="border border-gray-400 p-2"></td>
+                                                    <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
+                                                        <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
+                                                        <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td colSpan={8} className="border border-gray-400 p-2 text-center">
+                                                        <button className="btn btn-sm mr-2 btn-primary" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
+                                                        <button className="btn btn-sm">Not Applicable</button>
+                                                    </td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    }
+
+                                }
+
+                                ) : ''
+
                             }
 
                             {/* core functions end */}
@@ -323,9 +451,31 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                     </table>
                 </div>
 
+                <ConfirmationModal
+                    id="clear_confirmation_modal"
+                    title="Clear Actual Accomplishment"
+                    message="Are you sure you want to clear this actual accomplishment? This action cannot be undone."
+                    confirmText="Clear"
+                    cancelText="Cancel"
+                    confirmAction={clearSi}
+                    variant="danger"
+                    closeOnConfirm={false}
+                    isLoading={isClearing}
+                />
+
+                <AccomplishmentFormModal
+                    id="accomplishment_form_modal"
+                    successIndicator={accomplishmentToEdit?.successIndicator || null}
+                    existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
+                    onSubmit={handleAccomplishmentSubmit}
+                    isLoading={isSaving}
+                />
 
             </div>
             {/* form end */}
+
+
+
         </div >
     );
 }
