@@ -226,7 +226,7 @@ export default function AccomplishmentFormModal({
               {/* Percent */}
               <div>
                 <label className="label">
-                  <span className="label-text font-medium">Percent (%)</span>
+                  <span className="label-text font-medium">Allocated Weight (%)</span>
                 </label>
                 <input
                   type="number"

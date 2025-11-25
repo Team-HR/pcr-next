@@ -6,6 +6,7 @@ import { use, useEffect, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import AccomplishmentFormModal from "./components/AccomplishmentFormModal";
 import NotApplicableFormModal from "./components/NotApplicableFormModal";
+import { CiFolderOn } from "react-icons/ci";
 
 type Params = {
   periodId: string; // Next.js always passes route params as strings
@@ -237,16 +238,16 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         </div>
 
         <div>
-          <table className="table-auto border-collapse border border-gray-400 w-full">
+          <table className="table-auto border-collapse border border-gray-400 w-full my-2">
             <thead>
               <tr className="bg-blue-100 h-10">
                 <th className="border border-gray-400" rowSpan={2}>MFO/PAP</th>
                 <th className="border border-gray-400" rowSpan={2}>Success Indicator</th>
                 <th className="border border-gray-400" rowSpan={2}>Actual Accomplishments</th>
                 <th className="border border-gray-400" colSpan={4}>Rating Matrix</th>
-                <th className="border border-gray-400" rowSpan={2}>Remarks</th>
-                <th className="border border-gray-400" rowSpan={2}>FolderIcon</th>
-                <th className="border border-gray-400" rowSpan={2}>Options</th>
+                <th className="border border-gray-400 px-2" rowSpan={2}>Remarks</th>
+                <th className="border border-gray-400 text-3xl px-2" rowSpan={2}><CiFolderOn /></th>
+                <th className="border border-gray-400 no-print" rowSpan={2}>Options</th>
               </tr>
               <tr className="bg-blue-100 h-10">
                 <th className="border border-gray-400">Q</th>
@@ -256,32 +257,43 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
               </tr>
             </thead>
             <tbody>
+
+
+
+
+
               {/* strategic start*/}
               <tr className="h-10">
-                <td colSpan={10} className="p-2 font-bold bg-amber-100">Strategic Function</td>
+                <td colSpan={9} className="p-2 font-bold bg-amber-100">Strategic Function</td>
+                <td className="p-2 font-bold bg-amber-100 no-print"></td>
               </tr>
               <tr>
-                <td colSpan={10} className="border border-gray-400 p-2 text-center">
+                <td colSpan={2} className="border border-gray-400 p-2"></td>
+                <td colSpan={7} className="border border-gray-400 p-2 text-center">
                   <button className="btn btn-sm btn-primary" onClick={() => openAddModal(null)}>Add Accomplishment</button>
                   <button className="btn btn-sm ml-2">Not Applicable</button>
                 </td>
+                <td className="border border-gray-400 p-2 no-print"></td>
               </tr>
-
               {/* strategic end*/}
+
+
 
 
 
 
               {/* core functions start */}
               <tr className="h-10">
-                <td colSpan={10} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">{totalWeight ? totalWeight : '____'}%</span>)</td>
+                <td colSpan={9} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">{totalWeight ? totalWeight : '____'}%</span>)</td>
+                <td className="p-2 font-bold bg-amber-100 no-print"></td>
               </tr>
               {
                 coreFunctions ? coreFunctions.map((coreFunc, key) => {
                   if (coreFunc.mfo && !coreFunc.mfo.has_si) {
                     // if row has no si (mfo title only)
                     return <tr key={key}>
-                      <td colSpan={10} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
+                      <td colSpan={9} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
+                      <td className="border border-gray-400 p-2 no-print"></td>
                     </tr>
                   } else
                     // else if row has SIs
@@ -329,17 +341,18 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                         <>
                           <td colSpan={6} className="border border-gray-400 p-2 text-center">{coreFunc.acctual_accomplishment.remarks}</td>
                           <td className="border border-gray-400 p-2"></td>
-                          <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
+                          <td className="border border-gray-400 p-2 text-center no-print" style={{ width: 150 }}>
                             <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
                             <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
                           </td>
                         </>
                       ) : (
                         <>
-                          <td colSpan={8} className="border border-gray-400 p-2 text-center">
+                          <td colSpan={7} className="border border-gray-400 p-2 text-center">
                             <button className="btn btn-sm btn-primary mr-2" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
                             <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>-- Not Applicable</button>
                           </td>
+                          <td className="border border-gray-400 p-2 text-center no-print"></td>
                         </>
                       )}
                     </tr>
@@ -352,7 +365,8 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
               {/* core functions end */}
               {/* support functions start */}
               <tr className="h-10">
-                <td colSpan={10} className="p-2 font-bold bg-amber-100">Support Functions</td>
+                <td colSpan={9} className="p-2 font-bold bg-amber-100">Support Functions</td>
+                <td className="p-2 font-bold bg-amber-100 no-print"></td>
               </tr>
               <tr>
                 <td className="border border-gray-400 p-2">n/a</td>
@@ -364,7 +378,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                 <td className="border border-gray-400 p-2"></td>
                 <td className="border border-gray-400 p-2">n/a</td>
                 <td className="border border-gray-400 p-2"></td>
-                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2 no-print"></td>
               </tr>
               {/* support functions end */}
             </tbody>
@@ -410,7 +424,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             </tbody>
           </table>
         </div>
-        <div>
+        <div className="py-2">
           <table className="no-break table-auto border-collapse border border-gray-400 w-full">
             <tbody>
               <tr className="bg-green-200">
