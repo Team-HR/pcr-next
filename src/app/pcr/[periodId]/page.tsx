@@ -4,7 +4,8 @@ import API from "@/lib/axios";
 import { routes } from "@/types/routes";
 import { use, useEffect, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import AccomplishmentFormModal from "@/components/AccomplishmentFormModal";
+import AccomplishmentFormModal from "./components/AccomplishmentFormModal";
+import NotApplicableFormModal from "./components/NotApplicableFormModal";
 
 type Params = {
     periodId: string; // Next.js always passes route params as strings
@@ -34,7 +35,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         // console.log(res.data);
         // setCoreFunctions(res.data)
         const res = await API.get('/api/pcr/' + periodId + '/core')
-        console.log(res.data);
+        console.log("coreFunctions: ", res.data);
         setCoreFunctions(res.data)
     }
 
@@ -80,6 +81,15 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
         (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
     }
 
+
+    function openNaModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
+        setAccomplishmentToEdit({
+            accomplishment: null,
+            successIndicator: successIndicator,
+        });
+        (document.getElementById('not_applicable_form_modal') as HTMLDialogElement)?.showModal();
+    }
+
     async function clearSi() {
         if (accomplishmentToClear) {
             setIsClearing(true);
@@ -98,6 +108,13 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
             }
         }
     }
+
+    async function handleNotApplicableSubmit(data: { p_id?: number, remarks: string }) {
+        await API.post('/api/pcr/na', data)
+        await getCoreFunctions();
+        // console.log(data?.remarks);
+    }
+
 
     async function handleAccomplishmentSubmit(data: {
         actualAcc: string;
@@ -244,23 +261,24 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                             <tr className="h-10">
                                 <td colSpan={10} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">80%</span>)</td>
                             </tr>
-
                             {
                                 coreFunctions ? coreFunctions.map((coreFunc, key) => {
                                     if (coreFunc.mfo) {
                                         if (!coreFunc.mfo.has_si) {
+                                            // if row has no si (mfo title only)
                                             return <tr key={key}>
                                                 <td colSpan={10} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
                                             </tr>
                                         } else
-                                            return <tr key={key}>
+                                            // else if row has one si
+                                            return <tr key={key} style={{ color: coreFunc.acctual_accomplishment?.disable ? 'blue' : '', fontWeight: coreFunc.acctual_accomplishment?.disable ? 'bold' : '' }}>
                                                 <td className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
                                                 <td className="border border-gray-400 p-2">
                                                     {
                                                         coreFunc.success_indicator?.mi_succIn
                                                     }
                                                 </td>
-                                                {coreFunc.acctual_accomplishment ? (
+                                                {coreFunc.acctual_accomplishment && !coreFunc.acctual_accomplishment.disable ? (
                                                     <>
                                                         <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
                                                         <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
@@ -268,6 +286,15 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                                                         <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
                                                         <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
                                                         <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
+                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.disable}</td>
+                                                        <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
+                                                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
+                                                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
+                                                        </td>
+                                                    </>
+                                                ) : coreFunc.acctual_accomplishment && coreFunc.acctual_accomplishment.disable ? (
+                                                    <>
+                                                        <td colSpan={6} className="border border-gray-400 p-2 text-center">{coreFunc.acctual_accomplishment.remarks}</td>
                                                         <td className="border border-gray-400 p-2"></td>
                                                         <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
                                                             <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
@@ -278,7 +305,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                                                     <>
                                                         <td colSpan={8} className="border border-gray-400 p-2 text-center">
                                                             <button className="btn btn-sm btn-primary mr-2" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
-                                                            <button className="btn btn-sm">Not Applicable</button>
+                                                            <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>-- Not Applicable</button>
                                                         </td>
                                                     </>
                                                 )}
@@ -310,7 +337,7 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                                                 <>
                                                     <td colSpan={8} className="border border-gray-400 p-2 text-center">
                                                         <button className="btn btn-sm mr-2 btn-primary" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
-                                                        <button className="btn btn-sm">Not Applicable</button>
+                                                        <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>(Multi-SI) Not Applicable</button>
                                                     </td>
                                                 </>
                                             )}
@@ -471,7 +498,18 @@ export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
                     isLoading={isSaving}
                 />
 
-            </div>
+
+                <NotApplicableFormModal
+                    id="not_applicable_form_modal"
+                    successIndicator={accomplishmentToEdit?.successIndicator || null}
+                    existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
+                    onSubmit={handleNotApplicableSubmit}
+                    isLoading={isSaving}
+                />
+
+
+
+            </div >
             {/* form end */}
 
 
