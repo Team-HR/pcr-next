@@ -8,512 +8,510 @@ import AccomplishmentFormModal from "./components/AccomplishmentFormModal";
 import NotApplicableFormModal from "./components/NotApplicableFormModal";
 
 type Params = {
-    periodId: string; // Next.js always passes route params as strings
+  periodId: string; // Next.js always passes route params as strings
 };
 
 
 export default function RsmEditorPage({ params }: { params: Promise<Params> }) {
-    const { periodId } = use(params);
+  const { periodId } = use(params);
 
-    const [form, setForm] = useState({
-        period: 'January - June 2025',
-        type: 'ipcr'
+  const [form, setForm] = useState({
+    period: 'January - June 2025',
+    type: 'ipcr'
+  });
+
+  const [ratee, setRatee] = useState({
+    id: 9,
+    name: 'FRANZ JOSHUA A. VALENCIA, JR.',
+    position: 'ADMINISTRATIVE OFFICER IV',
+    department: 'HUMAN RESOURCE MANAGEMENT AND DEVELOPMENT OFFICE'
+  });
+
+
+  const [coreFunctions, setCoreFunctions] = useState<CoreFunctionData[]>([]);
+  const [totalWeight, setTotalWeight] = useState<number>(0);
+
+  async function getCoreFunctions() {
+    // const res = await API.get(routes.coreFunction.show(periodId, 32))
+    // console.log(res.data);
+    // setCoreFunctions(res.data)
+    const res = await API.get('/api/pcr/' + periodId + '/core')
+    console.log("coreFunctions: ", res.data);
+    const rows = res.data
+
+    var weight = 0;
+    rows.forEach((row: CoreFunctionData) => {
+      if (row.acctual_accomplishment?.percent) {
+        weight += row.acctual_accomplishment?.percent
+      }
     });
 
-    const [ratee, setRatee] = useState({
-        id: 9,
-        name: 'FRANZ JOSHUA A. VALENCIA, JR.',
-        position: 'ADMINISTRATIVE OFFICER IV',
-        department: 'HUMAN RESOURCE MANAGEMENT AND DEVELOPMENT OFFICE'
+    setTotalWeight(weight)
+    setCoreFunctions(rows)
+  }
+
+  useEffect(() => {
+    async function getStratFunction() {
+      // const res = await API.get(routes.stratFunction.show(periodId, 9))
+      // console.log('getStratFunction: ', res.data);
+    }
+
+    getStratFunction()
+    getCoreFunctions()
+
+  }, [periodId])
+
+  const [accomplishmentToClear, setAccomplishmentToClear] = useState<ActualAccomplishment | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
+
+  const [accomplishmentToEdit, setAccomplishmentToEdit] = useState<{
+    accomplishment: ActualAccomplishment | null;
+    successIndicator: SuccessIndicator | null;
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  function openClearModal(actualAcc: ActualAccomplishment | null) {
+    setAccomplishmentToClear(actualAcc);
+    setIsClearing(false);
+    (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.showModal();
+  }
+
+  function openAddModal(successIndicator: SuccessIndicator | null) {
+    setAccomplishmentToEdit({
+      accomplishment: null,
+      successIndicator: successIndicator,
     });
+    (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
+  }
+
+  function openEditModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
+    setAccomplishmentToEdit({
+      accomplishment: accomplishment,
+      successIndicator: successIndicator,
+    });
+    (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
+  }
 
 
-    const [coreFunctions, setCoreFunctions] = useState<CoreFunctionData[]>([]);
+  function openNaModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
+    setAccomplishmentToEdit({
+      accomplishment: null,
+      successIndicator: successIndicator,
+    });
+    (document.getElementById('not_applicable_form_modal') as HTMLDialogElement)?.showModal();
+  }
 
-    async function getCoreFunctions() {
-        // const res = await API.get(routes.coreFunction.show(periodId, 32))
-        // console.log(res.data);
-        // setCoreFunctions(res.data)
-        const res = await API.get('/api/pcr/' + periodId + '/core')
-        console.log("coreFunctions: ", res.data);
-        setCoreFunctions(res.data)
-    }
-
-    useEffect(() => {
-        async function getStratFunction() {
-            // const res = await API.get(routes.stratFunction.show(periodId, 9))
-            // console.log('getStratFunction: ', res.data);
-        }
-
-        getStratFunction()
-        getCoreFunctions()
-
-    }, [periodId])
-
-    const [accomplishmentToClear, setAccomplishmentToClear] = useState<ActualAccomplishment | null>(null);
-    const [isClearing, setIsClearing] = useState(false);
-
-    const [accomplishmentToEdit, setAccomplishmentToEdit] = useState<{
-        accomplishment: ActualAccomplishment | null;
-        successIndicator: SuccessIndicator | null;
-    } | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-
-    function openClearModal(actualAcc: ActualAccomplishment | null) {
-        setAccomplishmentToClear(actualAcc);
-        setIsClearing(false);
-        (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.showModal();
-    }
-
-    function openAddModal(successIndicator: SuccessIndicator | null) {
-        setAccomplishmentToEdit({
-            accomplishment: null,
-            successIndicator: successIndicator,
-        });
-        (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
-    }
-
-    function openEditModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
-        setAccomplishmentToEdit({
-            accomplishment: accomplishment,
-            successIndicator: successIndicator,
-        });
-        (document.getElementById('accomplishment_form_modal') as HTMLDialogElement)?.showModal();
-    }
-
-
-    function openNaModal(accomplishment: ActualAccomplishment | null, successIndicator: SuccessIndicator | null) {
-        setAccomplishmentToEdit({
-            accomplishment: null,
-            successIndicator: successIndicator,
-        });
-        (document.getElementById('not_applicable_form_modal') as HTMLDialogElement)?.showModal();
-    }
-
-    async function clearSi() {
-        if (accomplishmentToClear) {
-            setIsClearing(true);
-            try {
-                await API.delete('/api/pcr/accomplishment/' + accomplishmentToClear.cfd_id)
-                await getCoreFunctions();
-                setAccomplishmentToClear(null);
-                console.log("Successfully cleared actual accomplishment:", accomplishmentToClear);
-                // Close modal after operations complete
-                (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.close();
-            } catch (error) {
-                console.error("Error clearing accomplishment:", error);
-                // Keep modal open on error so user can retry
-            } finally {
-                setIsClearing(false);
-            }
-        }
-    }
-
-    async function handleNotApplicableSubmit(data: { p_id?: number, remarks: string }) {
-        await API.post('/api/pcr/na', data)
+  async function clearSi() {
+    if (accomplishmentToClear) {
+      setIsClearing(true);
+      try {
+        await API.delete('/api/pcr/accomplishment/' + accomplishmentToClear.cfd_id)
         await getCoreFunctions();
-        // console.log(data?.remarks);
+        setAccomplishmentToClear(null);
+        console.log("Successfully cleared actual accomplishment:", accomplishmentToClear);
+        // Close modal after operations complete
+        (document.getElementById('clear_confirmation_modal') as HTMLDialogElement)?.close();
+      } catch (error) {
+        console.error("Error clearing accomplishment:", error);
+        // Keep modal open on error so user can retry
+      } finally {
+        setIsClearing(false);
+      }
     }
+  }
+
+  async function handleNotApplicableSubmit(data: { p_id?: number, remarks: string }) {
+    await API.post('/api/pcr/na', data)
+    await getCoreFunctions();
+    // console.log(data?.remarks);
+  }
 
 
-    async function handleAccomplishmentSubmit(data: {
-        actualAcc: string;
-        Q: string;
-        E: string;
-        T: string;
-        A: string;
-        remarks: string;
-        percent: number;
-    }) {
-        if (!accomplishmentToEdit?.successIndicator) return;
+  async function handleAccomplishmentSubmit(data: {
+    actualAcc: string;
+    Q: string;
+    E: string;
+    T: string;
+    A: string;
+    remarks: string;
+    percent: number;
+  }) {
+    if (!accomplishmentToEdit?.successIndicator) return;
 
-        setIsSaving(true);
-        try {
-            const payload = {
-                p_id: accomplishmentToEdit.successIndicator.mi_id,
-                empId: ratee.id,
-                actualAcc: data.actualAcc,
-                Q: data.Q,
-                E: data.E,
-                T: data.T,
-                A: data.A || null,
-                remarks: data.remarks,
-                percent: data.percent || 0,
-            };
+    setIsSaving(true);
+    try {
+      const payload = {
+        p_id: accomplishmentToEdit.successIndicator.mi_id,
+        empId: ratee.id,
+        actualAcc: data.actualAcc,
+        Q: data.Q,
+        E: data.E,
+        T: data.T,
+        A: data.A || null,
+        remarks: data.remarks,
+        percent: data.percent || 0,
+      };
 
-            if (accomplishmentToEdit.accomplishment) {
-                // Update existing
-                await API.put('/api/pcr/accomplishment/' + accomplishmentToEdit.accomplishment.cfd_id, payload);
-            } else {
-                // Create new
-                await API.post('/api/pcr/accomplishment', payload);
-            }
+      if (accomplishmentToEdit.accomplishment) {
+        // Update existing
+        await API.put('/api/pcr/accomplishment/' + accomplishmentToEdit.accomplishment.cfd_id, payload);
+      } else {
+        // Create new
+        await API.post('/api/pcr/accomplishment', payload);
+      }
 
-            await getCoreFunctions();
-            setAccomplishmentToEdit(null);
-        } catch (error) {
-            console.error("Error saving accomplishment:", error);
-            throw error; // Re-throw to keep modal open
-        } finally {
-            setIsSaving(false);
-        }
+      await getCoreFunctions();
+      setAccomplishmentToEdit(null);
+    } catch (error) {
+      console.error("Error saving accomplishment:", error);
+      throw error; // Re-throw to keep modal open
+    } finally {
+      setIsSaving(false);
     }
+  }
 
-    // return (
-    //     <div className="bg-white">
-    //         <pre>
-    //             {JSON.stringify(coreFunctions, null, 2)}
-    //         </pre>
-    //     </div>
-    // )
+  // return (
+  //     <div className="bg-white">
+  //         <pre>
+  //             {JSON.stringify(coreFunctions, null, 2)}
+  //         </pre>
+  //     </div>
+  // )
 
 
-    return (
-        <div className="w-full">
-            {/* form start */}
-            <div className=" bg-white h-screen m-5 text-sm no-margin">
-                <div className="text-center text-lg font-medium">
-                    {
-                        form.type == 'ipcr' ? 'INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW (IPCR)' :
-                            form.type == 'spcr' ? 'SECTION PERFORMANCE COMMITMENT AND REVIEW (SPCR)' :
-                                form.type == 'dpcr' ? 'DEPARTMENT PERFORMANCE COMMITMENT AND REVIEW (DPCR)' :
-                                    form.type == 'division' ? 'DIVISION PERFORMANCE COMMITMENT AND REVIEW (DIVISION PCR)' :
-                                        <>{'< SET PCR FORMTYPE >'}</>
-                    }
-                </div>
-                <div className="mt-5 m-5">
-                    I, {ratee && ratee.name ? <span className="font-medium">{ratee.name}</span> : '__________________________________________'} , {ratee.position ? ratee.position : '_____________________________________________'} of the {ratee.department ? <span className="font-medium">{ratee.department}</span> : '_____________________________________________'} commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for the period {form.period ? form.period : '______________________________________'}.
-                </div>
-                <div className="float-right text-center mt-2 mr-10">
-                    <u><b>{ratee.name}</b></u>
-                    <div>Ratee</div>
-                </div>
+  return (
+    <div className="w-full">
+      {/* form start */}
+      <div className=" bg-white h-screen m-5 text-sm no-margin">
+        <div className="text-center text-lg font-medium">
+          {
+            form.type == 'ipcr' ? 'INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW (IPCR)' :
+              form.type == 'spcr' ? 'SECTION PERFORMANCE COMMITMENT AND REVIEW (SPCR)' :
+                form.type == 'dpcr' ? 'DEPARTMENT PERFORMANCE COMMITMENT AND REVIEW (DPCR)' :
+                  form.type == 'division' ? 'DIVISION PERFORMANCE COMMITMENT AND REVIEW (DIVISION PCR)' :
+                    <>{'< SET PCR FORMTYPE >'}</>
+          }
+        </div>
+        <div className="mt-5 m-5">
+          I, {ratee && ratee.name ? <span className="font-medium">{ratee.name}</span> : '__________________________________________'} , {ratee.position ? ratee.position : '_____________________________________________'} of the {ratee.department ? <span className="font-medium">{ratee.department}</span> : '_____________________________________________'} commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for the period {form.period ? form.period : '______________________________________'}.
+        </div>
+        <div className="float-right text-center mt-2 mr-10">
+          <u><b>{ratee.name}</b></u>
+          <div>Ratee</div>
+        </div>
 
-                <div>
-                    <table className="table-auto mt-20 border-collapse border border-gray-400 w-full">
-                        <tbody>
-                            <tr className="bg-green-200">
-                                <td className="border border-gray-400 p-2">
-                                    <div className="text-xs">Reviewed by:</div>
-                                    <div className="mt-10 text-center">
-                                        <u>VERONICA GRACE P. MIRAFLOR</u>
-                                        <div className="text-xs">Immediate Supervisor</div>
-                                    </div>
-                                </td>
-                                <td className="border border-gray-400 p-2">
-                                    <div className="text-xs">Noted by:</div>
-                                    <div className="mt-10 text-center">
-                                        <u>VERONICA GRACE P. MIRAFLOR</u>
-                                        <div className="text-xs">Department Head</div>
-                                    </div>
-                                </td>
-                                <td className="border border-gray-400 p-2">
-                                    <div className="text-xs">Approved by:</div>
-                                    <div className="mt-10 text-center">
-                                        <u>JOHN T. RAYMOND, JR.</u>
-                                        <div className="text-xs">Head of Agency</div>
-                                    </div>
-                                </td>
-                                <td className="border border-gray-400 p-2 w-40">
-                                    <div className="text-xs">Date:</div>
-                                    <div className="mt-10 text-center">
-                                        <u>08/18/25</u>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div>
+          <table className="table-auto mt-20 border-collapse border border-gray-400 w-full">
+            <tbody>
+              <tr className="bg-green-200">
+                <td className="border border-gray-400 p-2">
+                  <div className="text-xs">Reviewed by:</div>
+                  <div className="mt-10 text-center">
+                    <u>VERONICA GRACE P. MIRAFLOR</u>
+                    <div className="text-xs">Immediate Supervisor</div>
+                  </div>
+                </td>
+                <td className="border border-gray-400 p-2">
+                  <div className="text-xs">Noted by:</div>
+                  <div className="mt-10 text-center">
+                    <u>VERONICA GRACE P. MIRAFLOR</u>
+                    <div className="text-xs">Department Head</div>
+                  </div>
+                </td>
+                <td className="border border-gray-400 p-2">
+                  <div className="text-xs">Approved by:</div>
+                  <div className="mt-10 text-center">
+                    <u>JOHN T. RAYMOND, JR.</u>
+                    <div className="text-xs">Head of Agency</div>
+                  </div>
+                </td>
+                <td className="border border-gray-400 p-2 w-40">
+                  <div className="text-xs">Date:</div>
+                  <div className="mt-10 text-center">
+                    <u>08/18/25</u>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-                <div>
-                    <table className="table-auto border-collapse border border-gray-400 w-full">
-                        <thead>
-                            <tr className="bg-blue-100 h-10">
-                                <th className="border border-gray-400" rowSpan={2}>MFO/PAP</th>
-                                <th className="border border-gray-400" rowSpan={2}>Success Indicator</th>
-                                <th className="border border-gray-400" rowSpan={2}>Actual Accomplishments</th>
-                                <th className="border border-gray-400" colSpan={4}>Rating Matrix</th>
-                                <th className="border border-gray-400" rowSpan={2}>Remarks</th>
-                                <th className="border border-gray-400" rowSpan={2}>FolderIcon</th>
-                                <th className="border border-gray-400" rowSpan={2}>Options</th>
-                            </tr>
-                            <tr className="bg-blue-100 h-10">
-                                <th className="border border-gray-400">Q</th>
-                                <th className="border border-gray-400">E</th>
-                                <th className="border border-gray-400">T</th>
-                                <th className="border border-gray-400">A</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {/* strategic start*/}
-                            <tr className="h-10">
-                                <td colSpan={10} className="p-2 font-bold bg-amber-100">Strategic Function</td>
-                            </tr>
-                            <tr>
-                                <td colSpan={10} className="border border-gray-400 p-2 text-center">
-                                    <button className="btn btn-sm btn-primary" onClick={() => openAddModal(null)}>Add Accomplishment</button>
-                                    <button className="btn btn-sm ml-2">Not Applicable</button>
-                                </td>
-                            </tr>
+        <div>
+          <table className="table-auto border-collapse border border-gray-400 w-full">
+            <thead>
+              <tr className="bg-blue-100 h-10">
+                <th className="border border-gray-400" rowSpan={2}>MFO/PAP</th>
+                <th className="border border-gray-400" rowSpan={2}>Success Indicator</th>
+                <th className="border border-gray-400" rowSpan={2}>Actual Accomplishments</th>
+                <th className="border border-gray-400" colSpan={4}>Rating Matrix</th>
+                <th className="border border-gray-400" rowSpan={2}>Remarks</th>
+                <th className="border border-gray-400" rowSpan={2}>FolderIcon</th>
+                <th className="border border-gray-400" rowSpan={2}>Options</th>
+              </tr>
+              <tr className="bg-blue-100 h-10">
+                <th className="border border-gray-400">Q</th>
+                <th className="border border-gray-400">E</th>
+                <th className="border border-gray-400">T</th>
+                <th className="border border-gray-400">A</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* strategic start*/}
+              <tr className="h-10">
+                <td colSpan={10} className="p-2 font-bold bg-amber-100">Strategic Function</td>
+              </tr>
+              <tr>
+                <td colSpan={10} className="border border-gray-400 p-2 text-center">
+                  <button className="btn btn-sm btn-primary" onClick={() => openAddModal(null)}>Add Accomplishment</button>
+                  <button className="btn btn-sm ml-2">Not Applicable</button>
+                </td>
+              </tr>
 
-                            {/* strategic end*/}
-                            {/* core functions start */}
-                            <tr className="h-10">
-                                <td colSpan={10} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">80%</span>)</td>
-                            </tr>
+              {/* strategic end*/}
+
+
+
+
+              {/* core functions start */}
+              <tr className="h-10">
+                <td colSpan={10} className="p-2 font-bold bg-amber-100">Core Functions (<span className="text-blue-600">{totalWeight ? totalWeight : '____'}%</span>)</td>
+              </tr>
+              {
+                coreFunctions ? coreFunctions.map((coreFunc, key) => {
+                  if (coreFunc.mfo && !coreFunc.mfo.has_si) {
+                    // if row has no si (mfo title only)
+                    return <tr key={key}>
+                      <td colSpan={10} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
+                    </tr>
+                  } else
+                    // else if row has SIs
+                    return <tr key={key} style={{ color: coreFunc.acctual_accomplishment?.disable ? 'blue' : '', fontWeight: coreFunc.acctual_accomplishment?.disable ? 'bold' : '' }}>
+                      {
+                        coreFunc.mfo ? (
+                          <td className="border border-gray-400 p-2" style={{ position: 'relative' }}>
                             {
-                                coreFunctions ? coreFunctions.map((coreFunc, key) => {
-                                    if (coreFunc.mfo) {
-                                        if (!coreFunc.mfo.has_si) {
-                                            // if row has no si (mfo title only)
-                                            return <tr key={key}>
-                                                <td colSpan={10} className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
-                                            </tr>
-                                        } else
-                                            // else if row has one si
-                                            return <tr key={key} style={{ color: coreFunc.acctual_accomplishment?.disable ? 'blue' : '', fontWeight: coreFunc.acctual_accomplishment?.disable ? 'bold' : '' }}>
-                                                <td className="border border-gray-400 p-2" style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</td>
-                                                <td className="border border-gray-400 p-2">
-                                                    {
-                                                        coreFunc.success_indicator?.mi_succIn
-                                                    }
-                                                </td>
-                                                {coreFunc.acctual_accomplishment && !coreFunc.acctual_accomplishment.disable ? (
-                                                    <>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.E}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
-                                                        <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.disable}</td>
-                                                        <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
-                                                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
-                                                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
-                                                        </td>
-                                                    </>
-                                                ) : coreFunc.acctual_accomplishment && coreFunc.acctual_accomplishment.disable ? (
-                                                    <>
-                                                        <td colSpan={6} className="border border-gray-400 p-2 text-center">{coreFunc.acctual_accomplishment.remarks}</td>
-                                                        <td className="border border-gray-400 p-2"></td>
-                                                        <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
-                                                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
-                                                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
-                                                        </td>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <td colSpan={8} className="border border-gray-400 p-2 text-center">
-                                                            <button className="btn btn-sm btn-primary mr-2" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
-                                                            <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>-- Not Applicable</button>
-                                                        </td>
-                                                    </>
-                                                )}
-                                            </tr>
-                                    } else {
-                                        // for other success indicator in an mfo with multiple SI's
-                                        return <tr key={key}>
-                                            <td className="border border-gray-400 p-2"></td>
-                                            <td className="border border-gray-400 p-2">
-                                                {
-                                                    coreFunc.success_indicator?.mi_succIn
-                                                }
-                                            </td>
-                                            {coreFunc.acctual_accomplishment ? (
-                                                <>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.E}</td>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
-                                                    <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
-                                                    <td className="border border-gray-400 p-2"></td>
-                                                    <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
-                                                        <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
-                                                        <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td colSpan={8} className="border border-gray-400 p-2 text-center">
-                                                        <button className="btn btn-sm mr-2 btn-primary" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
-                                                        <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>(Multi-SI) Not Applicable</button>
-                                                    </td>
-                                                </>
-                                            )}
-                                        </tr>
-                                    }
-
-                                }
-
-                                ) : ''
-
+                              coreFunc.acctual_accomplishment ?
+                                <div className="bg-gray-300 font-bold text-center w-10" style={{ position: 'absolute', left: '2px' }}>{coreFunc.acctual_accomplishment.percent}%</div>
+                                : ''
                             }
+                            <div style={{ textIndent: 20 * coreFunc.mfo.indent }}>{coreFunc.mfo.cf_count} {coreFunc.mfo.cf_title}</div>
+                          </td>
+                        ) : (
+                          <td className="border border-gray-400 p-2" style={{ position: 'relative' }}>
+                            {
+                              coreFunc.acctual_accomplishment ?
+                                <div className="bg-gray-300 font-bold text-center w-10" style={{ position: 'absolute', left: '2px' }}>{coreFunc.acctual_accomplishment.percent}%</div>
+                                : ''
+                            }
+                          </td>
+                        )
+                      }
+                      <td className="border border-gray-400 p-2">
+                        {
+                          coreFunc.success_indicator?.mi_succIn
+                        }
+                      </td>
+                      {coreFunc.acctual_accomplishment && !coreFunc.acctual_accomplishment.disable ? (
+                        <>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.actualAcc}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.Q}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.E}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.T}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.A}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.remarks}</td>
+                          <td className="border border-gray-400 p-2">{coreFunc.acctual_accomplishment.disable}</td>
+                          <td className="border border-gray-400 p-2 text-center no-print" style={{ width: 150 }}>
+                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
+                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
+                          </td>
+                        </>
+                      ) : coreFunc.acctual_accomplishment && coreFunc.acctual_accomplishment.disable ? (
+                        <>
+                          <td colSpan={6} className="border border-gray-400 p-2 text-center">{coreFunc.acctual_accomplishment.remarks}</td>
+                          <td className="border border-gray-400 p-2"></td>
+                          <td className="border border-gray-400 p-2 text-center" style={{ width: 150 }}>
+                            <button className="btn btn-sm btn-success btn-outline mr-2" onClick={() => openEditModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>Edit</button>
+                            <button className="btn btn-sm btn-error btn-outline" onClick={() => openClearModal(coreFunc.acctual_accomplishment)}>Clear</button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td colSpan={8} className="border border-gray-400 p-2 text-center">
+                            <button className="btn btn-sm btn-primary mr-2" onClick={() => openAddModal(coreFunc.success_indicator)}>Add Accomplishment</button>
+                            <button className="btn btn-sm" onClick={() => openNaModal(coreFunc.acctual_accomplishment, coreFunc.success_indicator)}>-- Not Applicable</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                }
 
-                            {/* core functions end */}
-                            {/* support functions start */}
-                            <tr className="h-10">
-                                <td colSpan={10} className="p-2 font-bold bg-amber-100">Support Functions</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2">n/a</td>
-                                <td className="border border-gray-400 p-2"></td>
-                                <td className="border border-gray-400 p-2"></td>
-                            </tr>
-                            {/* support functions end */}
-                        </tbody>
-                    </table>
-                </div>
+                ) : ''
 
-                <div>
-                    <table className="no-break table-auto border-collapse border border-gray-400 w-full">
-                        <tbody>
-                            <tr className="bg-amber-100">
-                                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }} colSpan={2}>SUMMARY OF RATING</td>
-                                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>TOTAL</td>
-                                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>FINAL NUMERICAL RATING</td>
-                                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>FINAL ADJECTIVAL RATING</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-gray-400 p-2">Strategic Objectives</td>
-                                <td className="border border-gray-400 p-2">Total Weight Allocation: N/A</td>
-                                <td className="border border-gray-400 p-2 font-bold">N/A</td>
-                                <td rowSpan={3} className="text-center font-bold border border-gray-400 p-2">3.89</td>
-                                <td rowSpan={3} className="text-center font-bold border border-gray-400 p-2">Very Satisfactory</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-gray-400 p-2">Core Functions</td>
-                                <td className="border border-gray-400 p-2">Total Weight Allocation: 80%</td>
-                                <td className="border border-gray-400 p-2 font-bold">3.1</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-gray-400 p-2">Support Functions</td>
-                                <td className="border border-gray-400 p-2">Total Weight Allocation: 20%</td>
-                                <td className="border border-gray-400 p-2 font-bold">0.79</td>
-                            </tr>
-                            <tr>
-                                <td colSpan={5}>
-                                    <div className="pl-2 pt-2 font-medium">Comments and Recommendation For Development Purpose :</div>
+              }
 
-                                    <div className="p-2 ml-5">
-                                        test
-                                    </div>
+              {/* core functions end */}
+              {/* support functions start */}
+              <tr className="h-10">
+                <td colSpan={10} className="p-2 font-bold bg-amber-100">Support Functions</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 p-2">n/a</td>
+                <td className="border border-gray-400 p-2">n/a</td>
+                <td className="border border-gray-400 p-2">n/a</td>
+                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2">n/a</td>
+                <td className="border border-gray-400 p-2"></td>
+                <td className="border border-gray-400 p-2"></td>
+              </tr>
+              {/* support functions end */}
+            </tbody>
+          </table>
+        </div>
 
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div>
-                    <table className="no-break table-auto border-collapse border border-gray-400 w-full">
-                        <tbody>
-                            <tr className="bg-green-200">
-                                <td className="border border-gray-400 min-w-60" style={{ fontSize: 10 }}>
-                                    Discussed: Date:
-                                </td>
-                                <td className="border border-gray-400 p-2 min-w-50" style={{ fontSize: 10 }}>
-                                    Assessed by: Date:
-                                </td>
-                                <td>
+        <div>
+          <table className="no-break table-auto border-collapse border border-gray-400 w-full">
+            <tbody>
+              <tr className="bg-amber-100">
+                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }} colSpan={2}>SUMMARY OF RATING</td>
+                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>TOTAL</td>
+                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>FINAL NUMERICAL RATING</td>
+                <td className="border border-gray-400 p-2" style={{ fontSize: 9 }}>FINAL ADJECTIVAL RATING</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 p-2">Strategic Objectives</td>
+                <td className="border border-gray-400 p-2">Total Weight Allocation: N/A</td>
+                <td className="border border-gray-400 p-2 font-bold">N/A</td>
+                <td rowSpan={3} className="text-center font-bold border border-gray-400 p-2">3.89</td>
+                <td rowSpan={3} className="text-center font-bold border border-gray-400 p-2">Very Satisfactory</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 p-2">Core Functions</td>
+                <td className="border border-gray-400 p-2">Total Weight Allocation: 80%</td>
+                <td className="border border-gray-400 p-2 font-bold">3.1</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 p-2">Support Functions</td>
+                <td className="border border-gray-400 p-2">Total Weight Allocation: 20%</td>
+                <td className="border border-gray-400 p-2 font-bold">0.79</td>
+              </tr>
+              <tr>
+                <td colSpan={5}>
+                  <div className="pl-2 pt-2 font-medium">Comments and Recommendation For Development Purpose :</div>
 
-                                </td>
-                                <td className="border border-gray-400 p-2" style={{ fontSize: 10 }}>
-                                    Reviewed: Date:
-                                </td>
-                                <td className="border border-gray-400 p-2 min-w-50" style={{ fontSize: 10 }}>
-                                    Final Rating by:
-                                </td>
-                                <td className="border border-gray-400 p-2 min-w-30" style={{ fontSize: 10 }}>
-                                    Date:
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="border border-gray-400 text-center align-bottom font-medium">
-                                    {ratee.name}
-                                </td>
-                                <td className="border border-gray-400">
-                                    <div className="text-center" style={{ fontSize: 10 }}>I certified that I discussed my assessment of the performance with the employee:</div>
+                  <div className="p-2 ml-5">
+                    test
+                  </div>
 
-                                    <div className="text-center mt-10 font-medium">VERONICA GRACE P. MIRAFLOR</div>
-                                </td>
-                                <td className="border border-gray-400">
-                                    <div className="text-center" style={{ fontSize: 10 }}>I certified that I discussed with the employee how they are rated:</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <table className="no-break table-auto border-collapse border border-gray-400 w-full">
+            <tbody>
+              <tr className="bg-green-200">
+                <td className="border border-gray-400 min-w-60" style={{ fontSize: 10 }}>
+                  Discussed: Date:
+                </td>
+                <td className="border border-gray-400 p-2 min-w-50" style={{ fontSize: 10 }}>
+                  Assessed by: Date:
+                </td>
+                <td>
 
-                                    <div className="text-center mt-10 font-medium">VERONICA GRACE P. MIRAFLOR</div>
-                                </td>
-                                <td className="border border-gray-400 text-center align-bottom" style={{ fontSize: 10 }}>
-                                    (all PMT member will sign)
-                                </td>
-                                <td className="border border-gray-400">
-                                    <div className="text-center mt-10 font-medium"> JOHN T. RAYMOND, JR.</div>
-                                </td>
-                                <td className="border border-gray-400">
+                </td>
+                <td className="border border-gray-400 p-2" style={{ fontSize: 10 }}>
+                  Reviewed: Date:
+                </td>
+                <td className="border border-gray-400 p-2 min-w-50" style={{ fontSize: 10 }}>
+                  Final Rating by:
+                </td>
+                <td className="border border-gray-400 p-2 min-w-30" style={{ fontSize: 10 }}>
+                  Date:
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-gray-400 text-center align-bottom font-medium">
+                  {ratee.name}
+                </td>
+                <td className="border border-gray-400">
+                  <div className="text-center" style={{ fontSize: 10 }}>I certified that I discussed my assessment of the performance with the employee:</div>
 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
-                                    Ratee
-                                </td>
-                                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
-                                    Supervisor
-                                </td>
-                                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
-                                    Department Head
-                                </td>
-                                <td></td>
-                                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
-                                    Head of Agency
-                                </td>
-                                <td className="border border-gray-400"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                  <div className="text-center mt-10 font-medium">VERONICA GRACE P. MIRAFLOR</div>
+                </td>
+                <td className="border border-gray-400">
+                  <div className="text-center" style={{ fontSize: 10 }}>I certified that I discussed with the employee how they are rated:</div>
 
-                <ConfirmationModal
-                    id="clear_confirmation_modal"
-                    title="Clear Actual Accomplishment"
-                    message="Are you sure you want to clear this actual accomplishment? This action cannot be undone."
-                    confirmText="Clear"
-                    cancelText="Cancel"
-                    confirmAction={clearSi}
-                    variant="danger"
-                    closeOnConfirm={false}
-                    isLoading={isClearing}
-                />
+                  <div className="text-center mt-10 font-medium">VERONICA GRACE P. MIRAFLOR</div>
+                </td>
+                <td className="border border-gray-400 text-center align-bottom" style={{ fontSize: 10 }}>
+                  (all PMT member will sign)
+                </td>
+                <td className="border border-gray-400">
+                  <div className="text-center mt-10 font-medium"> JOHN T. RAYMOND, JR.</div>
+                </td>
+                <td className="border border-gray-400">
 
-                <AccomplishmentFormModal
-                    id="accomplishment_form_modal"
-                    successIndicator={accomplishmentToEdit?.successIndicator || null}
-                    existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
-                    onSubmit={handleAccomplishmentSubmit}
-                    isLoading={isSaving}
-                />
+                </td>
+              </tr>
+              <tr>
+                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
+                  Ratee
+                </td>
+                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
+                  Supervisor
+                </td>
+                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
+                  Department Head
+                </td>
+                <td></td>
+                <td className="text-center border border-gray-400" style={{ fontSize: 10 }}>
+                  Head of Agency
+                </td>
+                <td className="border border-gray-400"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
+        <ConfirmationModal
+          id="clear_confirmation_modal"
+          title="Clear Actual Accomplishment"
+          message="Are you sure you want to clear this actual accomplishment? This action cannot be undone."
+          confirmText="Clear"
+          cancelText="Cancel"
+          confirmAction={clearSi}
+          variant="danger"
+          closeOnConfirm={false}
+          isLoading={isClearing}
+        />
 
-                <NotApplicableFormModal
-                    id="not_applicable_form_modal"
-                    successIndicator={accomplishmentToEdit?.successIndicator || null}
-                    existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
-                    onSubmit={handleNotApplicableSubmit}
-                    isLoading={isSaving}
-                />
+        <AccomplishmentFormModal
+          id="accomplishment_form_modal"
+          successIndicator={accomplishmentToEdit?.successIndicator || null}
+          existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
+          onSubmit={handleAccomplishmentSubmit}
+          isLoading={isSaving}
+        />
 
-
-
-            </div >
-            {/* form end */}
+        <NotApplicableFormModal
+          id="not_applicable_form_modal"
+          successIndicator={accomplishmentToEdit?.successIndicator || null}
+          existingAccomplishment={accomplishmentToEdit?.accomplishment || null}
+          onSubmit={handleNotApplicableSubmit}
+          isLoading={isSaving}
+        />
 
 
 
-        </div >
-    );
+      </div >
+      {/* form end */}
+
+
+
+    </div >
+  );
 }

@@ -66,22 +66,9 @@ export default function NotApplicableFormModal({
         >
             <div className="modal-box max-w-lg">
                 <h3 className="font-bold text-lg mb-4">Mark as Not Applicable</h3>
-
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <div>
-                            {
-                                JSON.stringify(successIndicator?.mi_id)
-                            }
-                        </div>
-                        <div>
-                            {
-                                JSON.stringify(existingAccomplishment?.remarks)
-                            }
-                        </div>
-
-                        <div>
-
                             <label className="label">
                                 <span className="label-text font-medium">Remarks</span>
                             </label>

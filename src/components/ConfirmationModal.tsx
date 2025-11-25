@@ -51,6 +51,17 @@ export default function ConfirmationModal({
     dialogRef.current?.close();
   };
 
+  const handleDialogCancel = (e: React.SyntheticEvent<HTMLDialogElement>) => {
+    e.preventDefault();
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   const getConfirmButtonClass = () => {
     switch (variant) {
       case 'danger':
@@ -63,7 +74,13 @@ export default function ConfirmationModal({
   };
 
   return (
-    <dialog id={id} ref={dialogRef} className="modal">
+    <dialog
+      id={id}
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleDialogCancel}
+      onClick={handleBackdropClick}
+    >
       <div className="modal-box">
         <h3 className="font-bold text-lg">{title}</h3>
         <p className="py-4">{message}</p>
@@ -95,10 +112,10 @@ export default function ConfirmationModal({
           </form>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
+      {/* <form method="dialog" className="modal-backdrop">
         <button onClick={handleCancel}>close</button>
-      </form>
-    </dialog>
+      </form> */}
+    </ dialog>
   );
 }
 

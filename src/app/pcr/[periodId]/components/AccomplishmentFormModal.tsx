@@ -75,6 +75,14 @@ export default function AccomplishmentFormModal({
       onCancel();
     }
     dialogRef.current?.close();
+    setFormData({
+      actualAcc: '',
+      Q: '',
+      E: '',
+      T: '',
+      remarks: '',
+      percent: 0,
+    });
   };
 
   const handleDialogCancel = (e: React.SyntheticEvent<HTMLDialogElement>) => {
@@ -87,6 +95,8 @@ export default function AccomplishmentFormModal({
       e.preventDefault();
       e.stopPropagation();
     }
+
+
   };
 
   const getRatingOptions = (type: 'quality' | 'efficiency' | 'timeliness') => {
